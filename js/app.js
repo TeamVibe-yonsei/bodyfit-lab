@@ -183,10 +183,11 @@
   function defaultSize(kind, values) {
     const keys = BF.sizeKeys(kind); const table = BF.SIZES[kind === "dress" ? "top" : kind];
     let target;
-    if (kind === "top" || kind === "dress") target = (values.shoulder || 40) + 3.5;
-    else if (kind === "outer") target = (values.shoulder || 40) + 6;
-    else if (kind === "bottom") target = (values.waist || 28) * 1.30; // 허리 정면폭 → 의류 허리 반폭 근사(여유 포함)
-    else target = 26;
+    const f = S.sex === "F";
+    if (kind === "top" || kind === "dress") target = (values.shoulder || (f ? 36 : 40)) + 3.5;
+    else if (kind === "outer") target = (values.shoulder || (f ? 36 : 40)) + 6;
+    else if (kind === "bottom") target = (values.waist || (f ? 25 : 28)) * 1.30; // 허리 정면폭 → 의류 허리 반폭 근사(여유 포함)
+    else target = f ? 23.5 : 26;
     return keys.reduce((best, k) => Math.abs(table[k] - target) < Math.abs(table[best] - target) ? k : best, keys[0]);
   }
   function wearCatalog(it) {
@@ -485,7 +486,8 @@
     const r = BF.REF[group()]; $("groupChip").textContent = r.label.replace(" (근사)", "") + " 기준";
     renderSpec(spec); const c = renderType(spec, values); S.lastType = c;
     // 옷 사이즈 자동 재선택(치수 바뀌면)
-    S.garments.forEach(g => { if (g.refFrac && !g.sizeLocked) { g.size = defaultSize(g.kind, values); g.sizeCm = BF.SIZES[g.kind][g.size]; } });
+    BF.setSizeSex(S.sex);
+    S.garments.forEach(g => { if (g.refFrac) { if (!g.sizeLocked || BF.SIZES[g.kind][g.size] == null) { g.sizeLocked = false; g.size = defaultSize(g.kind, values); } g.sizeCm = BF.SIZES[g.kind][g.size]; } });
     renderWorn(); renderAvatar(values); renderSummary(spec, c); save();
   }
   $("resetAll").addEventListener("click", () => { if (!confirm("입력값·사진·옷을 모두 지울까요?")) return; try { localStorage.removeItem(LS); } catch (e) { } location.reload(); });

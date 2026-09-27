@@ -4,12 +4,22 @@ window.BF = window.BF || {};
 /* 각 아이템: 그림의 기준 폭이 실제 몇 cm 인지(refCm) 를 알고 있어 사이즈별로 정확히 배치됨.
    상의·아우터: refCm = 의류 어깨너비, 그림에서 어깨가 차지하는 비율 refFrac
    하의: refCm = 의류 허리(반폭×2 아님, 정면 폭), 신발: 발 길이 근사 */
-BF.SIZES = {
-  top:    { S: 44, M: 46.5, L: 49, XL: 51.5 },      // 의류 어깨너비 cm (국내 레귤러핏 통상값)
-  outer:  { S: 46, M: 48.5, L: 51, XL: 53.5 },
-  bottom: { 28: 36.5, 30: 38.5, 32: 40.5, 34: 42.5 }, // 허리 정면 폭 cm (인치 사이즈 ÷ 2 × 2.54 근사)
-  shoes:  { 250: 25, 260: 26, 270: 27, 280: 28 }
+BF.SIZES_BY = {
+  M: {
+    top:    { S: 44, M: 46.5, L: 49, XL: 51.5 },      // 의류 어깨너비 cm (국내 남성 레귤러핏 통상값)
+    outer:  { S: 46, M: 48.5, L: 51, XL: 53.5 },
+    bottom: { 28: 36.5, 30: 38.5, 32: 40.5, 34: 42.5 }, // 허리 정면 폭 cm (인치 사이즈 ÷ 2 × 2.54 근사)
+    shoes:  { 250: 25, 260: 26, 270: 27, 280: 28 }
+  },
+  F: {
+    top:    { S: 38, M: 40, L: 42, XL: 44 },          // 여성 상의 어깨너비 cm
+    outer:  { S: 40, M: 42.5, L: 45, XL: 47.5 },
+    bottom: { 24: 31.5, 25: 32.8, 26: 34, 27: 35.3, 28: 36.5 },
+    shoes:  { 225: 22.5, 230: 23, 235: 23.5, 240: 24, 245: 24.5 }
+  }
 };
+BF.SIZES = BF.SIZES_BY.M;
+BF.setSizeSex = sex => { BF.SIZES = BF.SIZES_BY[sex === "F" ? "F" : "M"]; };
 BF.sizeKeys = kind => Object.keys(BF.SIZES[kind === "dress" ? "top" : kind] || BF.SIZES.top);
 
 const svgUrl = (w, h, inner) => "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">${inner}</svg>`);
