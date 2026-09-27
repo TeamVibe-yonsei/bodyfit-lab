@@ -150,7 +150,9 @@ class Avatar3D {
     const rim = new THREE.DirectionalLight(0xffffff, 0.5); rim.position.set(0, 3, -4); this.scene.add(rim);
     const floor = new THREE.Mesh(new THREE.CircleGeometry(0.75, 48), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.0 })); floor.rotation.x = -Math.PI / 2; floor.position.y = 0.002; this.scene.add(floor);
     this.group = new THREE.Group(); this.scene.add(this.group);
-    this.bodyMat = new THREE.MeshStandardMaterial({ color: 0xf4f3ef, roughness: 0.65, metalness: 0.02 });
+    this.bodyMat = new THREE.MeshStandardMaterial({ color: 0xf1efe9, roughness: 0.92, metalness: 0.0 });
+    this.seamMat = new THREE.MeshStandardMaterial({ color: 0xd9d6cf, roughness: 0.9 });
+    this.baseMat = new THREE.MeshStandardMaterial({ color: 0x2a2e36, roughness: 0.6, metalness: 0.2 });
     this.resize(); new ResizeObserver(() => this.resize()).observe(el);
     const tick = () => { this.controls.update(); this.renderer.render(this.scene, this.camera); requestAnimationFrame(tick); }; tick();
     this.texCache = new Map();
@@ -176,6 +178,12 @@ class Avatar3D {
     add(new THREE.CylinderGeometry(4.6 * B.depth, 5.2 * B.depth, B.neckH + 4, 24).translate(0, B.ySh + B.neckH / 2 + 0.5, -0.5));
     [-1, 1].forEach(s => { add(ell(4.2, 2.2, 12.5, s * B.legX * 0.9, 2.4, 3.2)); });                 // 발
     [-1, 1].forEach(s => { add(ell(3.2, 6.5, 2.2, s * (B.hipW / 2 + 7.2), B.yWrist - 7, 0)); });      // 손
+    // 마네킹 관절 링(목·어깨·손목·허벅지) + 받침대
+    const ring = (r, y, x = 0, z = 0, rz = r) => { const g = new THREE.TorusGeometry(1, 0.35, 8, 40); g.scale(r, r, 1); g.rotateX(Math.PI / 2); g.translate(x, y, z); return add(g, this.seamMat); };
+    ring(B.neckW * 1.15 || 5, B.ySh + B.neckH - 1);
+    [-1, 1].forEach(sg => { ring(B.armR * 0.98, B.ySh - 3, sg * (B.S / 2 + 1.5)); ring(3.1, B.yWrist + 1, sg * (B.hipW / 2 + 7)); ring(B.legTopR * 0.97, B.yCrotch + 1, sg * B.legX); });
+    add(new THREE.CylinderGeometry(B.hipW * 0.9, B.hipW * 0.95, 1.6, 48).translate(0, 0.8, 0), this.baseMat);
+    add(new THREE.CylinderGeometry(B.hipW * 0.95, B.hipW * 1.0, 0.6, 48).translate(0, 0.3, 0), this.baseMat);
     // 의류
     (garments || []).slice().sort((a, b) => (BF.KIND_ORDER?.[a.kind] ?? 0) - (BF.KIND_ORDER?.[b.kind] ?? 0)).forEach((gm, i) => {
       let mat;
