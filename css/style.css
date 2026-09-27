@@ -441,3 +441,15 @@ h3.mt { margin-top: 18px; }
 .type-card h3 { font-size: 20px; margin: 0 0 6px; }
 .type-card h3 small { font-size: 14px; margin-left: 8px; }
 .type-card { padding: 16px 18px; }
+
+/* 체형 카드·추천 카드 글자 크기 통일 */
+.type-card h3 { font-size: 16px; margin: 0 0 6px; }
+.type-card h3 small { font-size: 13px; margin-left: 8px; }
+.type-card p { font-size: 13.5px; line-height: 1.6; }
+.type-card { padding: 14px 16px; }
+.reco .r h4 { font-size: 16px; margin-bottom: 8px; }
+.reco .r .why { font-size: 13.5px; font-weight: 600; margin: 0 0 10px; }
+.rlist li { font-size: 13px; padding: 8px 12px 8px 28px; }
+.sizes .s span { font-size: 13px; }
+.sizes .s b { font-size: 24px; }
+.sizes .s { padding: 12px; }
