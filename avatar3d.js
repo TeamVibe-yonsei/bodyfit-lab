@@ -68,8 +68,9 @@ function bodyRings(v, sex, frame, bmiRatio) {
   const ySh = H - headH - neckH, yCrotch = L, yHip = L + 9 * H / 174, yWaist = ySh + (yHip - ySh) * 0.62, yChest = ySh - 13 * H / 174;
   const d = k => k * depth;
   const torso = smooth([
-    { y: ySh + 3, rx: S / 2 * 0.62, rz: d(9.5) },
-    { y: ySh, rx: S / 2 * 0.98, rz: d(10.5) },
+    { y: ySh + 3, rx: S / 2 * 0.58, rz: d(9.2) },
+    { y: ySh + 0.5, rx: S / 2 * 0.90, rz: d(10.2) },
+    { y: ySh - 4, rx: S / 2 * 0.99, rz: d(11.0) },
     { y: yChest, rx: chestW / 2 + 1.5, rz: d(sex === "F" ? 12.6 : 11.8) },
     { y: ySh - 24 * H / 174, rx: chestW / 2 * 0.95, rz: d(10.8) },
     { y: yWaist, rx: W / 2, rz: d(9.4 * (W / 28) ** 0.6) },
@@ -107,13 +108,13 @@ function garmentMeshes(gm, B, mat) {
   const uvBox = () => ({ w: B.S + 2 * ease + 24, top: B.ySh + 4, h: B.ySh - B.yHip + 40 });
   if (["tee", "shirt", "hoodie", "coat"].includes(draw)) {
     const hem = draw === "coat" ? B.yKnee - 2 : draw === "hoodie" ? B.yHip - 6 : B.yHip - 3;
-    const torso = B.torso.filter(r => r.y >= B.yHip - 2).map(r => { const e = r.y > B.ySh - 6 ? (ease + 1.2) * 0.45 : ease + 1.2; return { ...r, rx: r.rx + e, rz: r.rz + e * 0.9 }; });
+    const torso = B.torso.filter(r => r.y >= B.yHip - 2).map(r => { const f = Math.max(0.35, Math.min(1, (B.ySh - r.y + 4) / 16)); const e = (ease + 1.2) * f; return { ...r, rx: r.rx + e, rz: r.rz + e * 0.9 }; });
     // 밑단까지 연장
     const last = torso[torso.length - 1];
     torso.push({ ...last, y: hem, rx: last.rx * (draw === "coat" ? 1.12 : 1.0), rz: last.rz * (draw === "coat" ? 1.1 : 1.0) });
     out.push(new THREE.Mesh(loft(torso, { closeTop: false, closeBottom: false, uv: gm.mine ? uvBox() : null }), mat));
     const sleeveEnd = draw === "tee" ? B.ySh - 22 * B.H / 174 : B.yWrist + 1;
-    [B.armL, B.armR].forEach(arm => { const rings = grow(arm.filter(r => r.y >= sleeveEnd - 0.01), ease * 0.5 + 1.4); if (rings.length > 1) out.push(new THREE.Mesh(loft(rings, { closeTop: false, closeBottom: false }), mat)); });
+    [B.armL, B.armR].forEach(arm => { const rings = arm.filter(r => r.y >= sleeveEnd - 0.01).map((r, i) => { const e = (ease * 0.5 + 1.4) * (i < 2 ? 0.5 : 1); return { ...r, rx: r.rx + e, rz: r.rz + e * 0.9 }; }); if (rings.length > 1) out.push(new THREE.Mesh(loft(rings, { closeTop: false, closeBottom: false }), mat)); });
     if (draw === "hoodie") out.push(new THREE.Mesh(ell(B.S / 2 * 0.7, 7, 7 + ease, 0, B.ySh + 4, -4), mat));
   } else if (["jeans", "wide", "shorts"].includes(draw)) {
     const wEase = draw === "wide" ? 5.5 : 1.6; const hem = draw === "shorts" ? B.yKnee + 4 : 3;
@@ -140,14 +141,14 @@ class Avatar3D {
     el.appendChild(this.renderer.domElement);
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
-    this.camera.position.set(0, 1.05, 4.6);
+    this.camera.position.set(0.6, 1.1, 4.2);
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.target.set(0, 0.95, 0); this.controls.enableDamping = true; this.controls.enablePan = false; this.controls.minDistance = 2.2; this.controls.maxDistance = 7; this.controls.maxPolarAngle = Math.PI * 0.58;
-    this.scene.add(new THREE.HemisphereLight(0xffffff, 0xb8bcc4, 1.15));
+    this.scene.add(new THREE.HemisphereLight(0xffffff, 0x3a4050, 1.0));
     const key = new THREE.DirectionalLight(0xffffff, 1.6); key.position.set(2, 4, 3); this.scene.add(key);
     const fill = new THREE.DirectionalLight(0xdfe7ff, 0.6); fill.position.set(-3, 2, -2); this.scene.add(fill);
     const rim = new THREE.DirectionalLight(0xffffff, 0.5); rim.position.set(0, 3, -4); this.scene.add(rim);
-    const floor = new THREE.Mesh(new THREE.CircleGeometry(0.7, 48), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.05 })); floor.rotation.x = -Math.PI / 2; floor.position.y = 0.002; this.scene.add(floor);
+    const floor = new THREE.Mesh(new THREE.CircleGeometry(0.75, 48), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.0 })); floor.rotation.x = -Math.PI / 2; floor.position.y = 0.002; this.scene.add(floor);
     this.group = new THREE.Group(); this.scene.add(this.group);
     this.bodyMat = new THREE.MeshStandardMaterial({ color: 0xf4f3ef, roughness: 0.65, metalness: 0.02 });
     this.resize(); new ResizeObserver(() => this.resize()).observe(el);

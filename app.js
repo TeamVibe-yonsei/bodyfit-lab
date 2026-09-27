@@ -131,18 +131,22 @@
   }
 
   /* ---------- 피팅룸: 옷장 ---------- */
+  const KIND_TITLE = { top: "상의", outer: "아우터", bottom: "하의", shoes: "신발", mine: "내 옷" };
   function renderWardrobe() {
     const g = $("wgrid"); g.innerHTML = "";
     const items = S.tab === "mine" ? S.garments.filter(x => x.mine) : BF.CATALOG.filter(c => c.kind === S.tab);
-    if (!items.length) { g.innerHTML = `<div class="empty small" style="grid-column:1/-1">${S.tab === "mine" ? "아래 버튼으로 내 옷 사진을 추가하세요." : "준비 중"}</div>`; return; }
+    $("shelfTitle").textContent = KIND_TITLE[S.tab]; $("shelfCount").textContent = items.length ? items.length + "개" : "";
     items.forEach(it => {
       const worn = S.garments.some(x => x.catId === it.id || x.id === it.id);
-      const el = document.createElement("div"); el.className = "witem" + (worn ? " on" : "");
-      el.innerHTML = `<img src="${it.url}" alt="${it.name}"><div class="wn">${it.name}</div><div class="wc">${BF.KIND_LABEL[it.kind]}${it.fit ? " · " + it.fit : ""}</div>`;
-      el.addEventListener("click", () => S.tab === "mine" ? selectGarment(it.id) : wearCatalog(it));
+      const el = document.createElement("div"); el.className = "pcard" + (worn ? " on" : "");
+      el.innerHTML = `${worn ? '<span class="pon">착용 중</span>' : ""}<div class="pimg"><img src="${it.url}" alt="${it.name}"></div><div class="pn">${it.name}</div><div class="pm">${it.fit || BF.KIND_LABEL[it.kind]}</div>`;
+      el.addEventListener("click", () => S.tab === "mine" ? selectGarment(it.id) : (worn ? unwear(it) : wearCatalog(it)));
       g.appendChild(el);
     });
+    const add = document.createElement("div"); add.className = "pcard add"; add.textContent = "+ 내 옷 사진";
+    add.addEventListener("click", () => $("garment").click()); g.appendChild(add);
   }
+  function unwear(it) { S.garments = S.garments.filter(x => x.catId !== it.id); S.sel = S.garments[0]?.id || null; renderAll(); }
   $("wtabs").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; S.tab = b.dataset.k; [...$("wtabs").children].forEach(x => x.classList.toggle("on", x === b)); renderWardrobe(); });
 
   function defaultSize(kind, values) {
@@ -189,12 +193,14 @@
   }
   function renderWorn() {
     const L = $("wlist"); const values = currentValues();
-    if (!S.garments.length) { L.innerHTML = '<div class="empty small">왼쪽에서 옷을 골라 보세요.</div>'; $("gctrl").hidden = true; return; }
+    $("outfitCount").textContent = S.garments.length;
+    if (!S.garments.length) { L.innerHTML = '<div class="fr-empty">아래에서 옷을 골라 입혀 보세요</div>'; $("gctrl").hidden = true; return; }
     const order = S.garments.slice().sort((a, b) => BF.KIND_ORDER[b.kind] - BF.KIND_ORDER[a.kind]);
     L.innerHTML = order.map(g => `<div class="wl ${S.sel === g.id ? "sel" : ""}" data-id="${g.id}"><img src="${g.url}" alt=""><div><div class="wn">${g.name} <small style="color:var(--muted);font-weight:400">${BF.KIND_LABEL[g.kind]}</small></div>
-      <div class="fitline">${g.refFrac ? `<select data-size="${g.id}">${BF.sizeKeys(g.kind).map(k => `<option value="${k}" ${k == g.size ? "selected" : ""}>${k}</option>`).join("")}</select>` : `<select data-kind="${g.id}">${Object.entries(BF.KIND_LABEL).map(([k, v]) => `<option value="${k}" ${k === g.kind ? "selected" : ""}>${v}</option>`).join("")}</select>`}${fitBadge(g, values)}</div></div></div>`).join("");
-    L.querySelectorAll(".wl").forEach(el => el.addEventListener("click", e => { if (e.target.tagName === "SELECT") return; selectGarment(el.dataset.id); }));
-    L.querySelectorAll("select[data-size]").forEach(sel => sel.addEventListener("change", () => { const g = S.garments.find(x => x.id === sel.dataset.size); g.size = sel.value; g.sizeCm = BF.SIZES[g.kind][sel.value]; g.sizeLocked = true; renderWorn(); renderAvatar(values); }));
+      <div class="fitline">${g.refFrac ? `<div class="sizechips" data-size="${g.id}">${BF.sizeKeys(g.kind).map(k => `<button data-k="${k}" class="${k == g.size ? "on" : ""}">${k}</button>`).join("")}</div>` : `<select data-kind="${g.id}">${Object.entries(BF.KIND_LABEL).map(([k, v]) => `<option value="${k}" ${k === g.kind ? "selected" : ""}>${v}</option>`).join("")}</select>`}</div>
+      <div class="fitline">${fitBadge(g, values)}</div></div></div>`).join("");
+    L.querySelectorAll(".wl").forEach(el => el.addEventListener("click", e => { if (e.target.closest("select,button")) return; selectGarment(el.dataset.id); }));
+    L.querySelectorAll(".sizechips button").forEach(btn => btn.addEventListener("click", () => { const id = btn.parentElement.dataset.size; const g = S.garments.find(x => x.id === id); g.size = btn.dataset.k; g.sizeCm = BF.SIZES[g.kind][btn.dataset.k]; g.sizeLocked = true; S.sel = id; renderWorn(); renderAvatar(values); }));
     L.querySelectorAll("select[data-kind]").forEach(sel => sel.addEventListener("change", () => { const g = S.garments.find(x => x.id === sel.dataset.kind); g.kind = sel.value; g.dx = g.dy = 0; renderAll(); }));
     const g = S.garments.find(x => x.id === S.sel); $("gctrl").hidden = !g; if (g) { $("gthr").parentElement.hidden = !g.mine; }
   }
@@ -225,7 +231,7 @@
   window.addEventListener("av3d-ready", () => { BF.av3d.mount($("studio3d")); render3d(currentValues()); });
   if (BF.av3d) { BF.av3d.mount($("studio3d")); }
   $("viewSeg").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; S.view = b.dataset.v; [...$("viewSeg").children].forEach(x => x.classList.toggle("on", x === b));
-    $("studio3d").hidden = S.view !== "3d"; $("hint3d").hidden = S.view !== "3d"; $("avatar").hidden = S.view !== "2d"; $("guideBtn").hidden = S.view !== "2d"; if (BF.av3d?.inst) BF.av3d.inst.resize(); });
+    $("studio3d").hidden = S.view !== "3d"; $("hint3d").hidden = S.view !== "3d"; $("spinBtn").hidden = S.view !== "3d"; $("avatar").hidden = S.view !== "2d"; $("guideBtn").hidden = S.view !== "2d"; if (BF.av3d?.inst) BF.av3d.inst.resize(); });
   let gdrag = null;
   const svgPos = e => { const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); };
   svg.addEventListener("pointerdown", e => { const im = e.target.closest("image"); if (!im) return; const gm = S.garments.find(g => g.id === im.dataset.id); S.sel = gm.id; const q = svgPos(e); gdrag = { gm, sx: q.x - gm.dx, sy: q.y - gm.dy }; svg.setPointerCapture(e.pointerId); renderWorn(); syncCtrl(); renderAvatar(currentValues()); e.preventDefault(); });
@@ -233,6 +239,7 @@
   svg.addEventListener("pointerup", () => { gdrag = null; });
   svg.addEventListener("wheel", e => { const im = e.target.closest("image"); if (!im) return; e.preventDefault(); const gm = S.garments.find(g => g.id === im.dataset.id); gm.scale = Math.max(.5, Math.min(2, gm.scale * (e.deltaY < 0 ? 1.04 : 0.96))); syncCtrl(); renderAvatar(currentValues()); }, { passive: false });
   $("guideBtn").addEventListener("click", () => { S.guides = !S.guides; save(); renderAvatar(currentValues()); });
+  $("spinBtn").addEventListener("click", () => { if (!BF.av3d?.inst) return; const c = BF.av3d.inst.controls; c.autoRotate = !c.autoRotate; c.autoRotateSpeed = 1.6; $("spinBtn").classList.toggle("on", c.autoRotate); });
 
   /* ---------- PNG ---------- */
   function svgToPng(svgEl, w, h, bg) {

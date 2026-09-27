@@ -82,30 +82,44 @@
 <!-- ───────── Step 4 ───────── -->
 <section class="step" id="s4">
   <div class="step-head"><span class="step-num">STEP 4</span><h2>피팅룸</h2></div>
-  <div class="fit-room">
-    <aside class="wardrobe panel">
-      <div class="tabs" id="wtabs">
-        <button data-k="top" class="on">상의</button><button data-k="outer">아우터</button><button data-k="bottom">하의</button><button data-k="shoes">신발</button><button data-k="mine">내 옷</button>
-      </div>
-      <div class="wgrid" id="wgrid"></div>
-      <label class="upload-tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>내 옷 사진 추가</span><input type="file" id="garment" accept="image/*" multiple></label>
-    </aside>
-    <div class="studio">
+  <div class="fr">
+    <div class="fr-stage">
       <div id="studio3d"></div>
       <svg id="avatar" viewBox="0 0 320 420" role="img" aria-label="치수를 반영한 아바타" hidden></svg>
-      <div class="av-tools"><div class="seg" id="viewSeg"><button data-v="3d" class="on">3D</button><button data-v="2d">2D</button></div><button class="btn" id="guideBtn" hidden>치수선</button><button class="btn" id="exportAv">PNG</button></div>
-      <div class="hint3d" id="hint3d">드래그해서 돌려 보세요 · 휠로 확대</div>
-    </div>
-    <aside class="worn panel">
-      <div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 style="margin:0">착용 중</h3><button class="btn primary" id="lookBtn" style="padding:6px 10px;font-size:12px">룩북 카드</button></div>
-      <div class="wlist" id="wlist"><div class="empty small">왼쪽에서 옷을 골라 보세요.</div></div>
-      <div class="ctrl" id="gctrl" hidden>
-        <label>배경 제거 <input type="range" id="gthr" min="0" max="80" value="34"><output id="gthrO">34</output></label>
-        <label>크기 <input type="range" id="gscale" min="50" max="200" value="100"><output id="gscaleO">100%</output></label>
-        <label>세로 <input type="range" id="gys" min="60" max="160" value="100"><output id="gysO">100%</output></label>
-        <div class="row"><button class="btn" id="gcenter">위치 초기화</button><button class="btn" id="gdel">벗기</button></div>
+      <div class="fr-top">
+        <div class="fr-title"><span>FITTING ROOM</span><b id="frName">Team Vibe</b></div>
+        <div class="fr-actions">
+          <div class="seg glass" id="viewSeg"><button data-v="3d" class="on">3D</button><button data-v="2d">2D</button></div>
+          <button class="gbtn" id="spinBtn" title="자동 회전">회전</button>
+          <button class="gbtn" id="guideBtn" hidden>치수선</button>
+          <button class="gbtn" id="exportAv">PNG</button>
+          <button class="gbtn primary" id="lookBtn">룩북 카드</button>
+        </div>
       </div>
+      <nav class="fr-rail" id="wtabs">
+        <button data-k="top" class="on"><i>T</i><span>상의</span></button>
+        <button data-k="outer"><i>O</i><span>아우터</span></button>
+        <button data-k="bottom"><i>B</i><span>하의</span></button>
+        <button data-k="shoes"><i>S</i><span>신발</span></button>
+        <button data-k="mine"><i>+</i><span>내 옷</span></button>
+      </nav>
+      <div class="fr-hint" id="hint3d">드래그로 회전 · 휠로 확대</div>
+    </div>
+    <aside class="fr-outfit glass">
+        <div class="fr-outfit-head"><span>OUTFIT</span><em id="outfitCount">0</em></div>
+        <div class="wlist" id="wlist"><div class="fr-empty">아래에서 옷을 골라 입혀 보세요</div></div>
+        <div class="ctrl" id="gctrl" hidden>
+          <label>배경 제거 <input type="range" id="gthr" min="0" max="80" value="34"><output id="gthrO">34</output></label>
+          <label>크기 <input type="range" id="gscale" min="50" max="200" value="100"><output id="gscaleO">100%</output></label>
+          <label>세로 <input type="range" id="gys" min="60" max="160" value="100"><output id="gysO">100%</output></label>
+          <div class="row"><button class="gbtn" id="gcenter">위치 초기화</button><button class="gbtn" id="gdel">벗기</button></div>
+        </div>
     </aside>
+    <div class="fr-shelf">
+      <div class="fr-shelf-head"><b id="shelfTitle">상의</b><span id="shelfCount"></span></div>
+      <div class="fr-carousel" id="wgrid"></div>
+    </div>
+    <label class="upload-tile" hidden><input type="file" id="garment" accept="image/*" multiple></label>
   </div>
 </section>
 
