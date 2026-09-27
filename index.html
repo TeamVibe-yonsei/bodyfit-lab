@@ -96,13 +96,6 @@
           <button class="gbtn primary" id="lookBtn">룩북 카드</button>
         </div>
       </div>
-      <nav class="fr-rail" id="wtabs">
-        <button data-k="top" class="on"><i>T</i><span>상의</span></button>
-        <button data-k="outer"><i>O</i><span>아우터</span></button>
-        <button data-k="bottom"><i>B</i><span>하의</span></button>
-        <button data-k="shoes"><i>S</i><span>신발</span></button>
-        <button data-k="mine"><i>+</i><span>내 옷</span></button>
-      </nav>
       <div class="fr-hint" id="hint3d">드래그로 회전 · 휠로 확대</div>
     </div>
     <aside class="fr-outfit glass">
@@ -116,10 +109,12 @@
         </div>
     </aside>
     <div class="fr-shelf">
-      <div class="fr-shelf-head"><b id="shelfTitle">상의</b><span id="shelfCount"></span></div>
+      <div class="fr-shelf-head">
+        <div class="seg" id="wtabs"><button data-k="top" class="on">상의</button><button data-k="outer">아우터</button><button data-k="bottom">하의</button><button data-k="shoes">신발</button><button data-k="mine">내 옷</button></div>
+        <label class="btn file" id="addMine">내 옷 사진 추가<input type="file" id="garment" accept="image/*" multiple></label>
+      </div>
       <div class="fr-carousel" id="wgrid"></div>
     </div>
-    <label class="upload-tile" hidden><input type="file" id="garment" accept="image/*" multiple></label>
   </div>
 </section>
 

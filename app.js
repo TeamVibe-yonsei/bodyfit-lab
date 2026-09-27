@@ -135,7 +135,7 @@
   function renderWardrobe() {
     const g = $("wgrid"); g.innerHTML = "";
     const items = S.tab === "mine" ? S.garments.filter(x => x.mine) : BF.CATALOG.filter(c => c.kind === S.tab);
-    $("shelfTitle").textContent = KIND_TITLE[S.tab]; $("shelfCount").textContent = items.length ? items.length + "개" : "";
+    if (S.tab === "mine" && !items.length) { g.innerHTML = '<div class="fr-empty" style="flex:1">오른쪽 "내 옷 사진 추가"로 상품 컷을 올리면 여기에 보관됩니다.</div>'; }
     items.forEach(it => {
       const worn = S.garments.some(x => x.catId === it.id || x.id === it.id);
       const el = document.createElement("div"); el.className = "pcard" + (worn ? " on" : "");
@@ -143,8 +143,6 @@
       el.addEventListener("click", () => S.tab === "mine" ? selectGarment(it.id) : (worn ? unwear(it) : wearCatalog(it)));
       g.appendChild(el);
     });
-    const add = document.createElement("div"); add.className = "pcard add"; add.textContent = "+ 내 옷 사진";
-    add.addEventListener("click", () => $("garment").click()); g.appendChild(add);
   }
   function unwear(it) { S.garments = S.garments.filter(x => x.catId !== it.id); S.sel = S.garments[0]?.id || null; renderAll(); }
   $("wtabs").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; S.tab = b.dataset.k; [...$("wtabs").children].forEach(x => x.classList.toggle("on", x === b)); renderWardrobe(); });
