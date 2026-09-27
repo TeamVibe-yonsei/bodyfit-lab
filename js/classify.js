@@ -7,12 +7,13 @@ BF.spectrum = function (values, groupKey) {
   const d = BF.derivedRef(ref);
   const all = Object.assign({}, ref, d);
   const v = Object.assign({}, values);
+  if (v.weight && v.height) v.bmi = v.weight / ((v.height / 100) ** 2);
   if (v.shoulder && v.waist) v.swr = v.shoulder / v.waist;
   if (v.leg && v.height) v.legRatio = v.leg / v.height * 100;
   const out = [];
   BF.KEYS.forEach(K => {
     const val = v[K.k];
-    if (!val) return;
+    if (!val || !all[K.k]) return;
     const [m, sd] = all[K.k];
     const z = (val - m) / sd;
     const lo = m - BF.SIGMA_RANGE * sd, hi = m + BF.SIGMA_RANGE * sd;
@@ -53,7 +54,7 @@ BF.classify = function (spec, values, sex) {
     label: `${frame} · ${leg} · ${stature}`, confidence: conf,
     legRatio: values.leg / values.height, swr: values.shoulder / values.waist,
     recommendations: BF.recommend(zs, zw, zl, zh, sex),
-    sizes: BF.sizeGuide(values.shoulder, sex)
+    sizes: BF.sizeGuide(values, sex)
   };
 };
 
@@ -110,16 +111,12 @@ BF.recommend = function (zs, zw, zl, zh, sex) {
   return R;
 };
 
-BF.sizeGuide = function (shoulder, sex) {
-  if (!shoulder) return null;
-  const table = BF.SIZE_GUIDE[sex === "F" ? "F" : "M"];
-  const pick = g => {
-    const hit = table.find(([, lo, hi]) => g >= lo && g < hi);
-    if (hit) return hit[0];
-    return g < table[0][1] ? table[0][0] + " 이하" : table[table.length - 1][0] + " 이상";
-  };
-  return Object.entries(BF.FIT_EASE).map(([fit, ease]) => ({
-    fit, label: { slim: "슬림핏", regular: "레귤러핏", semi: "세미오버", over: "오버핏" }[fit],
-    garmentShoulder: shoulder + ease, size: pick(shoulder + ease)
-  }));
+BF.sizeGuide = function (values, sex) {
+  const nearest = (table, target) => { const keys = Object.keys(table); return keys.reduce((b, k) => Math.abs(table[k] - target) < Math.abs(table[b] - target) ? k : b, keys[0]); };
+  if (!BF.SIZES) return null;
+  const out = [];
+  if (values.shoulder) out.push({ part: "상의", size: nearest(BF.SIZES.top, values.shoulder + 3.5) });
+  if (values.waist) out.push({ part: "하의", size: nearest(BF.SIZES.bottom, values.waist * 1.30) });
+  if (values.shoulder) out.push({ part: "아우터", size: nearest(BF.SIZES.outer, values.shoulder + 6) });
+  return out.length ? out : null;
 };
