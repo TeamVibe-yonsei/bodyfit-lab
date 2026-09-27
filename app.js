@@ -247,12 +247,12 @@
     });
   }
   const download = (canvas, name) => { const a = document.createElement("a"); a.download = name; a.href = canvas.toDataURL("image/png"); a.click(); };
-  $("exportAv").addEventListener("click", async () => { if (S.view === "3d" && BF.av3d?.inst) { const a = document.createElement("a"); a.download = "bodyfit_avatar_3d.png"; a.href = BF.av3d.inst.snapshot(1200, 1600); a.click(); return; } const c = await svgToPng(svg, 960, 1260, getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#fff"); download(c, "bodyfit_avatar.png"); });
+  $("exportAv").addEventListener("click", async () => { if (S.view === "3d" && BF.av3d?.inst) { const a = document.createElement("a"); a.download = "teamvibe_avatar_3d.png"; a.href = BF.av3d.inst.snapshot(1200, 1600); a.click(); return; } const c = await svgToPng(svg, 960, 1260, getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#fff"); download(c, "teamvibe_avatar.png"); });
   $("shareBtn").addEventListener("click", async () => {
     const values = currentValues(); const spec = BF.spectrum(values, group()); const c = BF.classify(spec, values, S.sex);
     const W = 1080, H = 1350; const cv = document.createElement("canvas"); cv.width = W; cv.height = H; const x = cv.getContext("2d");
     x.fillStyle = "#F3F5F8"; x.fillRect(0, 0, W, H);
-    x.fillStyle = "#16191F"; x.font = "800 44px Manrope, 'Noto Sans KR', sans-serif"; x.fillText("BodyFit Lab", 60, 90);
+    x.fillStyle = "#16191F"; x.font = "800 44px Manrope, 'Noto Sans KR', sans-serif"; x.fillText("Team Vibe", 60, 90);
     x.fillStyle = "#6B7480"; x.font = "500 20px 'Noto Sans KR', sans-serif"; x.fillText(`${BF.REF[group()].label} 기준 · ${new Date().toLocaleDateString("ko-KR")}`, 60, 124);
     x.fillStyle = "#2F5FD9"; x.font = "700 34px 'Noto Sans KR', sans-serif"; x.fillText(c ? c.label : "치수 입력 필요", 60, 190);
     let y = 250;
@@ -270,8 +270,8 @@
     if (c) { y += 10; x.fillStyle = "#16191F"; x.font = "600 22px 'Noto Sans KR', sans-serif"; x.fillText("추천 스타일", 60, y); y += 34; x.font = "400 19px 'Noto Sans KR', sans-serif";
       c.recommendations.forEach(r => { x.fillStyle = "#2F5FD9"; x.fillText(r.part, 60, y); x.fillStyle = "#3D444D"; x.fillText(r.good.slice(0, 2).join(" · "), 200, y); y += 32; }); }
     if (geo) { const av = await svgToPng(svg, 640, 840, "rgba(0,0,0,0)"); x.drawImage(av, W - 60 - 300, 130, 300, 394); }
-    x.fillStyle = "#6B7480"; x.font = "400 16px 'Noto Sans KR', sans-serif"; x.fillText("출처: 사이즈코리아 제8차 한국인 인체치수조사 · 사진 1장 추정 ±2~3cm · BodyFit Lab", 60, H - 50);
-    download(cv, "bodyfit_result.png");
+    x.fillStyle = "#6B7480"; x.font = "400 16px 'Noto Sans KR', sans-serif"; x.fillText("출처: 사이즈코리아 제8차 한국인 인체치수조사 · 사진 1장 추정 ±2~3cm · Team Vibe", 60, H - 50);
+    download(cv, "teamvibe_result.png");
   });
 
   /* ---------- 룩북 카드 ---------- */
@@ -286,7 +286,7 @@
     const W = 1080, H = 1350; const cv = document.createElement("canvas"); cv.width = W; cv.height = H; const x = cv.getContext("2d");
     x.fillStyle = "#F4F1EC"; x.fillRect(0, 0, W, H);
     // 헤더
-    x.fillStyle = "#1B1D22"; x.font = "800 30px Manrope, 'Noto Sans KR', sans-serif"; x.fillText("BodyFit Lab", 56, 66);
+    x.fillStyle = "#1B1D22"; x.font = "800 30px Manrope, 'Noto Sans KR', sans-serif"; x.fillText("Team Vibe", 56, 66);
     x.fillStyle = "#8A8F98"; x.font = "500 16px 'Noto Sans KR', sans-serif"; x.fillText(`${BF.REF[group()].label} · ${S.lastType ? S.lastType.frame : ""} · ${new Date().toLocaleDateString("ko-KR")}`, 56, 92);
     x.textAlign = "right"; x.fillStyle = "#1B1D22"; x.font = "600 15px 'JetBrains Mono', monospace"; x.fillText("LOOK 01", W - 56, 66); x.textAlign = "left";
     // 오른쪽: 아바타 착용 컷
@@ -319,14 +319,14 @@
     modal.innerHTML = `<div class="box look"><img alt="룩북 카드"><div class="row" style="margin-top:10px;justify-content:flex-end"><button class="btn" id="lkClose">닫기</button><button class="btn primary" id="lkSave">PNG 저장</button></div></div>`;
     modal.querySelector("img").src = cv.toDataURL("image/png"); document.body.appendChild(modal);
     modal.querySelector("#lkClose").onclick = () => modal.remove(); modal.addEventListener("click", e => { if (e.target === modal) modal.remove(); });
-    modal.querySelector("#lkSave").onclick = () => download(cv, "bodyfit_lookbook.png");
+    modal.querySelector("#lkSave").onclick = () => download(cv, "teamvibe_lookbook.png");
   }
   $("lookBtn").addEventListener("click", makeLookbook);
 
   /* ---------- 요약 ---------- */
   function renderSummary(spec, c) {
     if (!spec.length) { $("summary").textContent = "아직 결과가 없습니다."; return; }
-    const lines = [`[BodyFit Lab] ${BF.REF[group()].label} 기준`];
+    const lines = [`[Team Vibe] ${BF.REF[group()].label} 기준`];
     spec.forEach(p => lines.push(`${p.name} ${p.unit === "" ? p.value.toFixed(2) : p.value.toFixed(1)}${p.unit === "%" ? "%" : p.unit ? p.unit : ""} (상위 ${p.topPct.toFixed(1)}%)`));
     if (c) { lines.push(`체형: ${c.label}`); c.recommendations.forEach(r => lines.push(`${r.part}: ${r.good.slice(0, 2).join(", ")}`)); }
     if (S.garments.length) lines.push("착용: " + S.garments.map(g => g.name + (g.size ? " " + g.size : "")).join(", "));
@@ -352,8 +352,5 @@
   load();
   [...$("sexSeg").children].forEach(b => b.classList.toggle("on", b.dataset.v === S.sex));
   renderRef(); renderWardrobe(); update();
-  const links = [...document.querySelectorAll(".stepbar a")];
-  const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { const idx = ["s1", "s2", "s3", "s4"].indexOf(en.target.id); links.forEach((a, i) => { a.classList.toggle("active", i === idx); a.classList.toggle("done", i < idx); }); } }), { rootMargin: "-35% 0px -55% 0px" });
-  ["s1", "s2", "s3", "s4"].forEach(id => io.observe($(id)));
   setTimeout(() => BF.pose.load().catch(() => { }), 1500);
 })();
