@@ -135,13 +135,16 @@
     const w = parseFloat($("weight").value), h = used("height") / 100; if (!w || !h) return "";
     return `<div class="kpi"><b>${(w / (h * h)).toFixed(1)}</b><span>BMI</span></div>`;
   }
+  let refSex = null;
   function renderRef() {
-    const cols = [["height", "키"], ["shoulder", "어깨너비"], ["waist", "허리너비"], ["leg", "샅높이"], ["chestC", "가슴둘레"], ["waistC", "허리둘레"], ["hipC", "엉덩이둘레"], ["weight", "몸무게"]];
-    let h = "<table><thead><tr><th>그룹</th>" + cols.map(c => `<th>${c[1]}</th>`).join("") + "</tr></thead><tbody>";
-    for (const g in BF.REF) { const r = BF.REF[g]; h += `<tr><td style="font-family:var(--sans)">${r.label}</td>` + cols.map(c => `<td>${r[c[0]][0]}</td>`).join("") + "</tr>"; }
-    $("refTable").innerHTML = h + "</tbody></table>";
+    const sex = refSex || S.sex; [...$("refSex").children].forEach(b => b.classList.toggle("on", b.dataset.v === sex));
+    const groups = [["T", "16~19세"], ["20", "20~26세"], ["30", "27~39세"], ["40", "40대"]];
+    const rows = [["height", "키"], ["weight", "몸무게"], ["bmi", "BMI"], ["shoulder", "어깨너비"], ["waist", "허리너비"], ["leg", "다리길이"], ["chestC", "가슴둘레"], ["waistC", "허리둘레"], ["hipC", "엉덩이둘레"]];
+    let h = "<table><thead><tr><th>항목</th>" + groups.map(g => `<th>${g[1]}${BF.REF[sex + g[0]].status === "approx" ? "*" : ""}</th>`).join("") + "</tr></thead><tbody>";
+    rows.forEach(([k, name]) => { h += `<tr><td>${name}</td>` + groups.map(g => { const v = BF.REF[sex + g[0]][k]; return `<td>${v ? v[0] : "—"}</td>`; }).join("") + "</tr>"; });
+    $("refTable").innerHTML = h + "</tbody></table>" + '<p class="note">* 근사값</p>';
   }
-
+  $("refSex").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; refSex = b.dataset.v; renderRef(); });
   /* ---------- 피팅룸: 옷장 ---------- */
   const KIND_TITLE = { top: "상의", outer: "아우터", bottom: "하의", shoes: "신발", mine: "내 옷" };
   function renderWardrobe() {

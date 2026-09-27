@@ -17,7 +17,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focu
 a { color: var(--accent); }
 
 .wrap { max-width: 1200px; margin: 0 auto; padding-inline: 16px; }
-.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(10px); }
 .nav .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 54px; }
 .brand { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-weight: 800; letter-spacing: -.01em; font-size: 17px; text-decoration: none; color: var(--ink); }
 .brand .logo { width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(135deg, var(--accent), #9BB8FF); display: grid; place-items: center; color: var(--accent-ink); }
@@ -412,3 +412,7 @@ h3.mt { margin-top: 18px; }
 .ai-box a { color: var(--accent); }
 
 .tv-toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 60; background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 13px; font-weight: 600; box-shadow: var(--shadow); }
+
+#s1 { border-top: 0; padding-top: 0; margin-top: 26px; }
+.ref-head { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+.ref-table th:first-child, .ref-table td:first-child { font-family: var(--sans); font-weight: 600; }
