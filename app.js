@@ -6,73 +6,44 @@
   const SAMPLE = { shoulder: 42.5, waist: 27.4, leg: 81.0 };
 
   /* ---------- 저장/복원 ---------- */
-  const LS = "bodyfit.v3";
-  const save = () => { try { localStorage.setItem(LS, JSON.stringify({ sex: S.sex, age: S.age, height: $("height").value, weight: $("weight").value, manual: S.manual, guides: S.guides })); } catch (e) { } };
-  const load = () => { try { const d = JSON.parse(localStorage.getItem(LS) || "null"); if (!d) return; S.sex = d.sex || "M"; S.age = d.age || "20"; S.manual = d.manual || {}; S.guides = d.guides ?? true; if (d.height) $("height").value = d.height; if (d.weight) $("weight").value = d.weight; } catch (e) { } };
+  const LS = "bodyfit.v4";
+  const save = () => { try { localStorage.setItem(LS, JSON.stringify({ sex: S.sex, ageIn: $("ageIn").value, height: $("height").value, weight: $("weight").value, manual: S.manual, guides: S.guides })); } catch (e) { } };
+  const load = () => { try { const d = JSON.parse(localStorage.getItem(LS) || "null"); if (!d) return; S.sex = d.sex || "M"; S.manual = d.manual || {}; S.guides = d.guides ?? true; if (d.ageIn) $("ageIn").value = d.ageIn; if (d.height) $("height").value = d.height; if (d.weight) $("weight").value = d.weight; } catch (e) { } };
 
   /* ---------- 테마 ---------- */
-  $("themeBtn").addEventListener("click", () => {
-    const r = document.documentElement; const cur = r.getAttribute("data-theme");
-    const next = cur ? (cur === "dark" ? "light" : "dark") : (matchMedia("(prefers-color-scheme: dark)").matches ? "light" : "dark");
-    r.setAttribute("data-theme", next); try { localStorage.setItem("bodyfit.theme", next); } catch (e) { }
-  });
-  try { const t = localStorage.getItem("bodyfit.theme"); if (t) document.documentElement.setAttribute("data-theme", t); } catch (e) { }
 
   /* ---------- 기본 정보 ---------- */
-  const group = () => S.sex + S.age;
-  $("sexSeg").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; S.sex = b.dataset.v; [...$("sexSeg").children].forEach(x => x.classList.toggle("on", x === b)); if (!S.photoLoaded) $("height").value = BF.REF[group()].height[0]; update(); });
-  $("age").addEventListener("change", e => { S.age = e.target.value; update(); });
+  const ageGroup = () => { const a = parseInt($("ageIn").value, 10); if (!a) return "20"; return a < 20 ? "T" : a <= 26 ? "20" : a <= 39 ? "30" : "40"; };
+  const group = () => S.sex + ageGroup();
+  $("sexSeg").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; S.sex = b.dataset.v; [...$("sexSeg").children].forEach(x => x.classList.toggle("on", x === b)); update(); });
+  $("ageIn").addEventListener("input", () => update());
   $("height").addEventListener("input", () => update()); $("weight").addEventListener("input", () => update());
 
-  const legendHtml = BF.POINTS.map(p => `<span><b>${p.n}</b>${p.label}</span>`).join("");
-  $("legend").innerHTML = legendHtml;
-  $("legend2").innerHTML = BF.POINTS.map(p => `<span><b>${p.n}</b>${p.label} <small style="color:var(--muted)">— ${p.tip}</small></span>`).join("");
+  $("legend2").innerHTML = BF.POINTS.map(p => `<span><b>${p.n}</b>${p.label}</span>`).join("");
 
   /* ---------- 스테이지 ---------- */
   const stage = new BF.Stage($("cv"), () => update());
-  const setStatus = (t, cls = "") => { const s = $("status"); s.className = "status " + cls; s.children[1].textContent = t; };
+  const setStatus = (t, cls = "") => { const s = $("status"); s.className = "guide-line " + cls; s.textContent = t; };
   function loadImage(src) {
     const img = new Image();
     img.onload = () => {
-      stage.setImage(img); S.photoLoaded = true; S.sample = false; $("placeholder").hidden = true; $("legend").hidden = false;
-      $("autoBtn").disabled = false; $("resetPts").disabled = false; autoDetect();
+      stage.setImage(img); S.photoLoaded = true; S.sample = false; $("placeholder").hidden = true; autoDetect();
     };
     img.onerror = () => setStatus("이미지를 열 수 없습니다. JPG/PNG 파일인지 확인하세요.", "err");
     img.src = src;
   }
   $("photo").addEventListener("change", e => { const f = e.target.files[0]; if (f) loadImage(URL.createObjectURL(f)); e.target.value = ""; });
-  $("resetPts").addEventListener("click", () => { stage.resetPoints(); stage.draw(); setStatus("점을 기본 위치로 되돌렸습니다. 드래그로 맞춰 주세요."); });
-  $("autoBtn").addEventListener("click", autoDetect);
   async function autoDetect() {
     if (!stage.img) return;
-    setStatus("포즈 인식 중… (처음 한 번은 수 초 걸립니다)", "busy");
+    setStatus("자동으로 위치를 잡는 중…", "busy");
     try {
       const res = await BF.pose.detect(stage.img);
       if (!res.poseLandmarks) throw new Error("사람을 찾지 못했습니다");
       const { pts, confidence } = BF.pose.toPoints(res.poseLandmarks, stage.cv.width, stage.cv.height);
       stage.setPoints(pts);
-      setStatus(`자동 인식 완료 (신뢰도 ${(confidence * 100).toFixed(0)}%). ①머리 ⑤⑥허리 ⑦샅을 확인해 보정하세요.`, "ok");
-    } catch (err) { setStatus("자동 인식 실패 (" + (err.message || "오류") + "). 점을 직접 드래그해 주세요.", "err"); }
+      setStatus("숫자를 몸의 올바른 위치에 놓아 주세요", "ok");
+    } catch (err) { setStatus("숫자를 몸의 올바른 위치에 놓아 주세요", "err"); }
   }
-
-  /* ---------- 카메라 ---------- */
-  $("camBtn").addEventListener("click", async () => {
-    if (!navigator.mediaDevices?.getUserMedia) { setStatus("이 브라우저는 카메라를 지원하지 않습니다.", "err"); return; }
-    const modal = document.createElement("div"); modal.className = "modal";
-    modal.innerHTML = `<div class="box"><video autoplay playsinline muted></video><div class="row" style="margin-top:10px;justify-content:flex-end"><button class="btn" id="camCancel">취소</button><button class="btn primary" id="camShot">촬영</button></div><p class="note">3초 타이머 후 촬영됩니다. 전신이 보이도록 물러나세요.</p></div>`;
-    document.body.appendChild(modal);
-    const video = modal.querySelector("video"); let stream;
-    try { stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 } }, audio: false }); video.srcObject = stream; }
-    catch (e) { modal.remove(); setStatus("카메라 권한이 없거나 사용할 수 없습니다.", "err"); return; }
-    const close = () => { stream.getTracks().forEach(t => t.stop()); modal.remove(); };
-    modal.querySelector("#camCancel").onclick = close;
-    modal.querySelector("#camShot").onclick = () => {
-      const btn = modal.querySelector("#camShot"); let n = 3; btn.disabled = true; btn.textContent = n;
-      const iv = setInterval(() => { n--; if (n > 0) { btn.textContent = n; return; } clearInterval(iv);
-        const c = document.createElement("canvas"); c.width = video.videoWidth; c.height = video.videoHeight; c.getContext("2d").drawImage(video, 0, 0);
-        close(); loadImage(c.toDataURL("image/jpeg", 0.92)); }, 1000);
-    };
-  });
 
   /* ---------- 치수: 사진 → 사용값, 직접 입력 시 우선 ---------- */
   function source(k) {
@@ -84,7 +55,8 @@
   }
   function used(k) {
     const src = source(k);
-    if (k === "height") return parseFloat($("height").value) || 0;
+    if (k === "height") return parseFloat($("height").value) || (S.sample && !S.photoLoaded ? BF.REF[group()].height[0] : 0);
+    if (k === "weight") return parseFloat($("weight").value) || 0;
     if (src === "manual") return parseFloat(S.manual[k]);
     if (src === "photo") return S.est[k];
     if (src === "sample") return SAMPLE[k];
@@ -94,12 +66,12 @@
   const PENCIL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
   function renderMeasures() {
     const L = $("mlist"); L.innerHTML = "";
-    BF.KEYS.filter(k => !k.derived && k.k !== "height").forEach(K => {
+    BF.KEYS.filter(k => !k.derived && !k.optional && k.k !== "height").forEach(K => {
       const src = source(K.k), v = used(K.k); const [lab, cls] = SRC_LABEL[src];
       const row = document.createElement("div"); row.className = "mrow" + (v ? "" : " empty-val");
       row.innerHTML = `<div class="mname">${K.name}<small>${K.desc}</small></div>
         <div class="mval">${v ? v.toFixed(1) : "—"}<small>cm</small></div>
-        <div class="msrc"><span class="chip ${cls}">${lab}</span><button class="edit ${S.editing === K.k ? "on" : ""}" title="직접 입력" aria-label="${K.name} 직접 입력">${PENCIL}</button></div>
+        <div class="msrc">${src === "sample" ? '<span class="chip warn">예시</span>' : ""}<button class="edit ${S.editing === K.k ? "on" : ""}" title="직접 입력" aria-label="${K.name} 직접 입력">${PENCIL}</button></div>
         ${S.editing === K.k ? `<div class="medit">줄자 실측값 <input type="number" step="0.1" min="0" placeholder="cm" value="${S.manual[K.k] || ""}" autofocus> ${S.est[K.k] ? `<span>사진 추정 ${S.est[K.k].toFixed(1)}</span>` : ""} <button class="btn ghost" data-clear>사진 값 사용</button></div>` : ""}`;
       row.querySelector(".edit").addEventListener("click", () => { S.editing = S.editing === K.k ? null : K.k; renderMeasures(); const i = L.querySelector("input"); if (i) i.focus(); });
       const inp = row.querySelector("input"); if (inp) inp.addEventListener("input", () => { S.manual[K.k] = inp.value; update(false); });
@@ -116,17 +88,17 @@
     spec.forEach(p => {
       const it = document.createElement("div"); it.className = "item";
       const unitTxt = p.unit === "%" ? "%" : p.unit ? " " + p.unit : "";
-      const vtxt = (p.unit === "" ? p.value.toFixed(2) : p.value.toFixed(1)) + unitTxt;
+      const vtxt = (p.unit === "" ? p.value.toFixed(p.fixed1 ? 1 : 2) : p.value.toFixed(1)) + unitTxt;
       const rankCls = p.topPct <= 25 ? "" : p.topPct >= 75 ? "lo" : "mid";
       const rankTxt = p.topPct <= 50 ? `상위 ${p.topPct.toFixed(0)}%` : `하위 ${p.pct.toFixed(0)}%`;
-      it.innerHTML = `<div class="top"><b>${p.name}</b><span class="val"><strong>${vtxt}</strong> <span class="rank ${rankCls}">${rankTxt}</span></span></div>
+      it.innerHTML = `<div class="top"><b>${p.name} <span class="rank ${rankCls}">${rankTxt}</span></b><span class="val"><strong>${vtxt}</strong></span></div>
         <div class="bar"><span class="tick" style="left:${100 / 6}%"></span><span class="tick" style="left:${200 / 6}%"></span><span class="tick mean" style="left:50%"></span><span class="tick" style="left:${400 / 6}%"></span><span class="tick" style="left:${500 / 6}%"></span>
           <span class="lab" style="left:${p.pos}%">${p.z >= 0 ? "평균보다 " + (p.unit === "" ? (p.value - p.mean).toFixed(2) : "+" + (p.value - p.mean).toFixed(1) + unitTxt) : "평균보다 " + (p.unit === "" ? (p.value - p.mean).toFixed(2) : (p.value - p.mean).toFixed(1) + unitTxt)}</span>
           <span class="pin" style="left:${p.pos}%" tabindex="0" aria-label="${p.name} ${vtxt}, ${rankTxt}"></span></div>
         <div class="ends"><span>${p.loLabel} ${p.unit === "" ? p.lo.toFixed(2) : p.lo.toFixed(0)}</span><span>또래 평균 ${p.unit === "" ? p.mean.toFixed(2) : p.mean.toFixed(1)}</span><span>${p.unit === "" ? p.hi.toFixed(2) : p.hi.toFixed(0)} ${p.hiLabel}</span></div>`;
       const pin = it.querySelector(".pin");
       const show = () => { hide(); tip = document.createElement("div"); tip.className = "tooltip";
-        tip.innerHTML = `<b>${p.name}</b> ${vtxt} · ${p.desc}<br>또래 평균 ${p.mean.toFixed(p.unit === "" ? 2 : 1)} (σ ${p.sd.toFixed(2)}) · z ${p.z.toFixed(2)}<br>상위 ${p.topPct.toFixed(1)}% / 하위 ${p.pct.toFixed(1)}%`;
+        tip.innerHTML = `<b>${p.name}</b> ${vtxt}<br>또래 평균 ${p.mean.toFixed(p.unit === "" ? 1 : 1)}<br>상위 ${p.topPct.toFixed(1)}% / 하위 ${p.pct.toFixed(1)}%`;
         it.appendChild(tip); tip.style.left = p.pos + "%"; tip.style.top = (pin.offsetTop - 4) + "px"; };
       const hide = () => { if (tip) { tip.remove(); tip = null; } };
       pin.addEventListener("mouseenter", show); pin.addEventListener("mouseleave", hide); pin.addEventListener("focus", show); pin.addEventListener("blur", hide);
@@ -138,15 +110,13 @@
   const ICON = { top: "T", bottom: "B", outer: "O" };
   function renderType(spec, values) {
     const c = BF.classify(spec, values, S.sex); const T = $("typeCard"), R = $("reco");
-    if (!c) { T.className = "empty"; T.textContent = "치수가 모두 있으면 체형과 추천이 표시됩니다."; R.innerHTML = ""; $("sizeBox").hidden = true; return null; }
+    if (!c) { T.className = "empty"; T.textContent = "치수가 모두 있으면 체형과 추천이 표시됩니다."; R.innerHTML = ""; $("sizes").innerHTML = ""; return null; }
     T.className = "type-card";
-    T.innerHTML = `<div><div class="tag">${c.tag}</div><h3>${c.frame}<small>${c.leg} · ${c.stature}</small></h3><p>${c.description}</p></div>
-      <div class="kpis"><div class="kpi"><b>${c.swr.toFixed(2)}</b><span>어깨 ÷ 허리</span></div><div class="kpi"><b>${(c.legRatio * 100).toFixed(0)}%</b><span>다리 비율</span></div><div class="kpi"><b>${c.confidence}%</b><span>분류 신뢰도</span></div>${weightKpi()}</div>`;
-    R.innerHTML = c.recommendations.map(r => `<div class="r"><h4><span>${ICON[r.icon]}</span>${r.part}</h4>
-      <div class="lbl">추천</div><div class="chips">${r.good.slice(0, 3).map(g => `<span>${g}</span>`).join("")}</div>
-      <div class="lbl">피하기</div><div class="chips no">${r.bad.slice(0, 2).map(b => `<span>${b}</span>`).join("")}</div><p class="why">${r.why}</p></div>`).join("");
-    $("sizeBox").hidden = !c.sizes;
-    if (c.sizes) $("sizes").innerHTML = c.sizes.map(s => `<div class="s"><span>${s.label}</span><b>${s.size}</b><em>의류 어깨 ${s.garmentShoulder.toFixed(1)}cm</em></div>`).join("");
+    T.innerHTML = `<div><h3>${c.frame}<small>${c.leg} · ${c.stature}</small></h3><p>${c.description}</p></div>`;
+    R.innerHTML = c.recommendations.map(r => `<div class="r"><h4>${r.part}</h4><p class="why">${r.why}</p>
+      <div class="lbl">피하기</div><div class="chips no">${r.bad.slice(0, 3).map(b => `<span>${b}</span>`).join("")}</div>
+      <div class="lbl">추천</div><div class="chips">${r.good.slice(0, 3).map(g => `<span>${g}</span>`).join("")}</div></div>`).join("");
+    $("sizes").innerHTML = (c.sizes || []).map(s => `<div class="s"><span>${s.part} 사이즈 가이드</span><b>${s.size}</b></div>`).join("");
     return c;
   }
   function weightKpi() {
@@ -156,7 +126,7 @@
   function renderRef() {
     const cols = [["height", "키"], ["shoulder", "어깨너비"], ["waist", "허리너비"], ["leg", "샅높이"], ["chestC", "가슴둘레"], ["waistC", "허리둘레"], ["hipC", "엉덩이둘레"], ["weight", "몸무게"]];
     let h = "<table><thead><tr><th>그룹</th>" + cols.map(c => `<th>${c[1]}</th>`).join("") + "</tr></thead><tbody>";
-    for (const g in BF.REF) { const r = BF.REF[g]; h += `<tr><td style="font-family:var(--sans)">${r.label}</td>` + cols.map(c => `<td>${r[c[0]][0]} / ${r[c[0]][1]}</td>`).join("") + "</tr>"; }
+    for (const g in BF.REF) { const r = BF.REF[g]; h += `<tr><td style="font-family:var(--sans)">${r.label}</td>` + cols.map(c => `<td>${r[c[0]][0]}</td>`).join("") + "</tr>"; }
     $("refTable").innerHTML = h + "</tbody></table>";
   }
 
@@ -248,7 +218,7 @@
   }
   function render3d(values) {
     if (!BF.av3d) return;
-    const w = parseFloat($("weight").value), h = (values.height || 170) / 100; const ref = BF.REF[group()];
+    const w = values.weight, h = (values.height || 170) / 100; const ref = BF.REF[group()];
     const bmiRatio = w ? (w / (h * h)) / (ref.weight[0] / ((ref.height[0] / 100) ** 2)) : 1;
     BF.av3d.update({ values, sex: S.sex, frame: S.lastType ? S.lastType.frame : "균형형", bmiRatio, garments: S.garments });
   }
@@ -365,13 +335,13 @@
   $("copyBtn").addEventListener("click", async () => { try { await navigator.clipboard.writeText($("summary").textContent); $("copyBtn").textContent = "복사됨"; setTimeout(() => $("copyBtn").textContent = "복사", 1500); } catch (e) { } });
 
   /* ---------- 갱신 ---------- */
-  function currentValues() { const v = {}; ["height", "shoulder", "waist", "leg"].forEach(k => { const u = used(k); if (u) v[k] = u; }); return v; }
+  function currentValues() { const v = {}; ["height", "shoulder", "waist", "leg", "weight"].forEach(k => { const u = used(k); if (u) v[k] = u; }); return v; }
   function renderAll() { renderWardrobe(); renderWorn(); syncCtrl(); renderAvatar(currentValues()); renderSummary(BF.spectrum(currentValues(), group()), BF.classify(BF.spectrum(currentValues(), group()), currentValues(), S.sex)); }
   function update(rebuild = true) {
     S.est = stage.measure(parseFloat($("height").value) || 0);
     renderMeasures();
     const values = currentValues(); const spec = BF.spectrum(values, group());
-    const r = BF.REF[group()]; $("groupChip").textContent = r.label + (r.status === "approx" ? " · 근사" : "") + (S.sample && !S.photoLoaded ? " · 예시 값 표시 중" : "");
+    const r = BF.REF[group()]; $("groupChip").textContent = r.label.replace(" (근사)", "") + " 기준" + (S.sample && !S.photoLoaded ? " · 예시" : "");
     renderSpec(spec); const c = renderType(spec, values); S.lastType = c;
     // 옷 사이즈 자동 재선택(치수 바뀌면)
     S.garments.forEach(g => { if (g.refFrac && !g.sizeLocked) { g.size = defaultSize(g.kind, values); g.sizeCm = BF.SIZES[g.kind][g.size]; } });
@@ -380,10 +350,10 @@
   $("resetAll").addEventListener("click", () => { if (!confirm("입력값·사진·옷을 모두 지울까요?")) return; try { localStorage.removeItem(LS); } catch (e) { } location.reload(); });
 
   load();
-  [...$("sexSeg").children].forEach(b => b.classList.toggle("on", b.dataset.v === S.sex)); $("age").value = S.age;
+  [...$("sexSeg").children].forEach(b => b.classList.toggle("on", b.dataset.v === S.sex));
   renderRef(); renderWardrobe(); update();
-  const links = [...document.querySelectorAll(".nav-steps a")];
-  const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) links.forEach(a => a.classList.toggle("active", a.getAttribute("href") === "#" + en.target.id)); }), { rootMargin: "-40% 0px -50% 0px" });
+  const links = [...document.querySelectorAll(".stepbar a")];
+  const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { const idx = ["s1", "s2", "s3", "s4"].indexOf(en.target.id); links.forEach((a, i) => { a.classList.toggle("active", i === idx); a.classList.toggle("done", i < idx); }); } }), { rootMargin: "-35% 0px -55% 0px" });
   ["s1", "s2", "s3", "s4"].forEach(id => io.observe($(id)));
   setTimeout(() => BF.pose.load().catch(() => { }), 1500);
 })();

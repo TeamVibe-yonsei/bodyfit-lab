@@ -1,81 +1,77 @@
 <!doctype html>
-<html lang="ko">
+<html lang="ko" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BodyFit Lab</title>
-<meta name="description" content="전신 사진 한 장으로 어깨너비·허리너비·다리길이를 추정하고, 사이즈코리아 국민 인체치수 대비 내 위치와 체형, 어울리는 옷, 아바타 피팅까지 확인하는 웹 도구">
+<meta name="description" content="사진 한 장으로 내 체형과 옷 핏을 확인하는 웹 서비스">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Noto+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="css/style.css">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232F5FD9'/%3E%3Cpath d='M8 22V10h4a4 4 0 0 1 0 8H8m0-4h5a4 4 0 0 1 0 8H8' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236D95F2'/%3E%3Cpath d='M8 22V10h4a4 4 0 0 1 0 8H8m0-4h5a4 4 0 0 1 0 8H8' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
 </head>
 <body>
 <nav class="nav"><div class="wrap">
   <a class="brand" href="#top"><span class="logo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 17V6h4a3 3 0 0 1 0 6H6m0-1h5a3 3 0 0 1 0 6H6"/></svg></span>BodyFit Lab</a>
-  <div class="nav-steps"><a href="#s1">사진</a><a href="#s2">치수</a><a href="#s3">체형</a><a href="#s4">피팅룸</a></div>
-  <div class="nav-actions"><button class="btn ghost" id="themeBtn" title="테마 전환">테마</button><button class="btn ghost" id="resetAll">초기화</button></div>
+  <button class="btn ghost" id="resetAll">초기화</button>
 </div></nav>
+<div class="stepbar"><div class="wrap">
+  <a href="#s1" data-s="s1" class="active"><b>1</b><span>사진 올리기</span></a>
+  <a href="#s2" data-s="s2"><b>2</b><span>상위 몇 %?</span></a>
+  <a href="#s3" data-s="s3"><b>3</b><span>체형 · 어울리는 옷</span></a>
+  <a href="#s4" data-s="s4"><b>4</b><span>피팅룸</span></a>
+</div></div>
 
 <main class="wrap" id="top">
 <header class="hero">
-  <p class="eyebrow">Photo → Measure → Fit</p>
-  <h1>사진 한 장으로 내 치수, 내 체형, 나에게 맞는 옷.</h1>
-  <p class="lede">사진은 이 브라우저 안에서만 처리됩니다. 사이즈코리아 국민 인체치수 기준으로 또래 대비 위치를 보여드립니다.</p>
+  <h1>사진 한 장으로<br>내 체형과 옷 핏을 확인하세요.</h1>
 </header>
 
 <!-- ───────── Step 1 ───────── -->
 <section class="step" id="s1">
-  <div class="step-head"><span class="step-num">1</span><h2>사진 올리기</h2></div>
+  <div class="step-head"><span class="step-num">STEP 1</span><h2>사진 올리기</h2><p>타이트한 옷을 입은 사진이 좋아요</p></div>
   <div class="grid-2">
     <div class="panel">
-      <div class="row">
-        <label class="btn primary file">사진 선택<input type="file" id="photo" accept="image/*"></label>
-        <button class="btn" id="camBtn">카메라 촬영</button>
-        <button class="btn" id="autoBtn" disabled>자동 인식</button>
-        <button class="btn" id="resetPts" disabled>점 초기화</button>
-      </div>
+      <div class="row"><label class="btn primary file">사진 선택<input type="file" id="photo" accept="image/*"></label></div>
       <div class="stage" id="stage">
         <canvas id="cv" width="720" height="520"></canvas>
         <div class="placeholder" id="placeholder"><div>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="5" r="2.5"/><path d="M8 22v-7l-2-6h12l-2 6v7M6 9l-2 4M18 9l2 4"/></svg>
-          <div>정면 전신 사진을 올리면 기준점이 자동으로 잡힙니다.</div>
         </div></div>
       </div>
-      <div class="status" id="status"><span class="dot"></span><span>사진을 기다리는 중</span></div>
-      <div class="legend" id="legend" hidden></div>
+      <div class="guide-line" id="status">숫자를 몸의 올바른 위치에 놓아 주세요</div>
     </div>
     <div class="panel">
       <h3>기본 정보</h3>
       <div class="row">
         <div class="field">성별<div class="seg" id="sexSeg"><button data-v="M" class="on">남성</button><button data-v="F">여성</button></div></div>
-        <div class="field">연령대<select id="age"><option value="T">16~19세</option><option value="20" selected>20~26세</option><option value="30">27~39세</option><option value="40">40대</option></select></div>
-        <label class="field">키 (cm) <input type="number" id="height" value="174" min="120" max="220" step="0.1"></label>
-        <label class="field">몸무게 (kg) <input type="number" id="weight" placeholder="선택" min="30" max="200" step="0.1"></label>
+        <label class="field">나이 <input type="number" id="ageIn" min="10" max="90" step="1"></label>
+        <label class="field">키 (cm) <input type="number" id="height" min="120" max="220" step="0.1"></label>
+        <label class="field">몸무게 (kg) <input type="number" id="weight" min="30" max="200" step="0.1"></label>
       </div>
-      <details class="help">
-        <summary>촬영 가이드 · 기준점 설명</summary>
-        <ul class="tips">
-          <li>카메라를 허리 높이에, 2.5~3m 거리에서 정면 촬영</li>
-          <li>발끝까지 프레임 안에, 팔은 몸에서 살짝 떼기</li>
-          <li>몸 윤곽이 보이는 옷, 단색 배경</li>
-        </ul>
-        <div class="legend" id="legend2"></div>
-      </details>
+      <h3 class="mt">촬영 가이드</h3>
+      <div class="legend" id="legend2"></div>
+      <ul class="tips">
+        <li>카메라를 허리 높이에 두고 2~3m 거리에서 정면 촬영</li>
+        <li>발끝까지 프레임에 들어오게, 팔은 몸에서 살짝 떼고 발은 어깨너비로</li>
+        <li>몸 윤곽이 보이는 옷, 단색 배경, 균일한 조명</li>
+        <li>정확한 값을 실측하여 직접 입력하면 좋아요</li>
+      </ul>
     </div>
   </div>
 </section>
 
 <!-- ───────── Step 2 ───────── -->
 <section class="step" id="s2">
-  <div class="step-head"><span class="step-num">2</span><h2>내 치수와 또래 대비 위치</h2><span class="chip" id="groupChip"></span></div>
+  <div class="step-head"><span class="step-num">STEP 2</span><h2>나는 상위 몇 퍼일까</h2><span class="chip" id="groupChip"></span></div>
   <div class="grid-2">
     <div class="panel">
+      <h3>측정 치수</h3>
       <div class="mlist" id="mlist"></div>
-      <p class="note">사진 값은 ±2~3cm 오차가 있습니다. 줄자로 잰 값이 있으면 연필 아이콘을 눌러 입력하세요. 입력값이 우선 적용됩니다.</p>
       <details class="ref"><summary>기준 통계 (사이즈코리아 8차)</summary><div class="ref-table" id="refTable"></div></details>
     </div>
     <div class="panel spec-panel">
+      <h3>스펙트럼</h3>
       <div class="spec" id="spec"></div>
     </div>
   </div>
@@ -83,18 +79,15 @@
 
 <!-- ───────── Step 3 ───────── -->
 <section class="step" id="s3">
-  <div class="step-head"><span class="step-num">3</span><h2>체형 유형과 어울리는 옷</h2></div>
+  <div class="step-head"><span class="step-num">STEP 3</span><h2>체형과 어울리는 옷</h2></div>
   <div id="typeCard" class="empty">치수가 모두 있으면 체형과 추천이 표시됩니다.</div>
   <div class="reco" id="reco"></div>
-  <div class="panel" id="sizeBox" hidden>
-    <h3>사이즈 가이드</h3>
-    <div class="sizes" id="sizes"></div>
-  </div>
+  <div class="sizes" id="sizes"></div>
 </section>
 
 <!-- ───────── Step 4 ───────── -->
 <section class="step" id="s4">
-  <div class="step-head"><span class="step-num">4</span><h2>피팅룸</h2></div>
+  <div class="step-head"><span class="step-num">STEP 4</span><h2>피팅룸</h2></div>
   <div class="fit-room">
     <aside class="wardrobe panel">
       <div class="tabs" id="wtabs">
@@ -131,8 +124,7 @@
 </main>
 
 <footer><div class="wrap">
-  <p>데이터: 국가기술표준원 제8차 한국인 인체치수조사(2020~2023) · 체형 분류 참고: FFIT(2004), Jung 외(2026) · 포즈 추정: Google MediaPipe</p>
-  <p>사진과 입력값은 이 기기의 브라우저에만 저장되며 서버로 전송되지 않습니다. 연세대학교 학생자율연구 Team Vibe · 연구용 프로토타입</p>
+  <p>데이터: 국가기술표준원 제8차 한국인 인체치수조사 · 포즈 추정: Google MediaPipe · 연세대학교 학생자율연구 Team Vibe</p>
 </div></footer>
 
 <script type="importmap">{"imports":{"three":"./vendor/three/three.module.js","three/addons/":"./vendor/three/addons/"}}</script>
