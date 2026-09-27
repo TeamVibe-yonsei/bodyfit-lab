@@ -32,6 +32,12 @@
     img.onerror = () => setStatus("이미지를 열 수 없습니다. JPG/PNG 파일인지 확인하세요.", "err");
     img.src = src;
   }
+  $("cardToggle").addEventListener("change", e => {
+    stage.setUseCard(e.target.checked);
+    if (e.target.checked) setStatus("초록 A·B 점을 카드의 긴 변 양 끝에 놓아 주세요 (키는 사진에서 계산됩니다)", "ok");
+    else setStatus("숫자를 몸의 올바른 위치에 놓아 주세요");
+    update();
+  });
   $("photo").addEventListener("change", e => { const f = e.target.files[0]; if (f) loadImage(URL.createObjectURL(f)); e.target.value = ""; });
   async function autoDetect() {
     if (!stage.img) return;
@@ -47,7 +53,7 @@
 
   /* ---------- 진단 ---------- */
   function diagnose() {
-    if (!(parseFloat($("height").value) > 0)) { setStatus("키를 입력해 주세요", "err"); $("height").focus(); return; }
+    if (!(parseFloat($("height").value) > 0) && !(S.est.scaleSource === "card" && S.est.height)) { setStatus("키를 입력하거나 카드 정밀 측정을 켜 주세요", "err"); $("height").focus(); return; }
     S.diagnosed = true;
     ["s2", "s3", "s4"].forEach((id, i) => { const el = $(id); el.classList.remove("locked"); el.classList.add("reveal"); el.style.animationDelay = (i * 0.12) + "s"; });
     const rep = document.querySelector(".report"); rep.classList.remove("locked"); rep.classList.add("reveal"); rep.style.animationDelay = ".4s";
@@ -67,7 +73,7 @@
   }
   function used(k) {
     const src = source(k);
-    if (k === "height") return parseFloat($("height").value) || (S.sample && !S.photoLoaded ? BF.REF[group()].height[0] : 0);
+    if (k === "height") { const inp = parseFloat($("height").value); if (S.est.scaleSource === "card" && S.est.height) return inp || S.est.height; return inp || (S.sample && !S.photoLoaded ? BF.REF[group()].height[0] : 0); }
     if (k === "weight") return parseFloat($("weight").value) || 0;
     if (src === "manual") return parseFloat(S.manual[k]);
     if (src === "photo") return S.est[k];
@@ -78,8 +84,8 @@
   const PENCIL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
   function renderMeasures() {
     const L = $("mlist"); L.innerHTML = "";
-    BF.KEYS.filter(k => !k.derived && !k.optional && k.k !== "height").forEach(K => {
-      const src = source(K.k), v = used(K.k); const [lab, cls] = SRC_LABEL[src];
+    BF.KEYS.filter(k => !k.derived && !k.optional && (k.k !== "height" || S.est.scaleSource === "card")).forEach(K => {
+      const src = K.k === "height" ? "photo" : source(K.k), v = used(K.k); const [lab, cls] = SRC_LABEL[src];
       const row = document.createElement("div"); row.className = "mrow" + (v ? "" : " empty-val");
       row.innerHTML = `<div class="mname">${K.name}<small>${K.desc}</small></div>
         <div class="mval">${v ? v.toFixed(1) : "—"}<small>cm</small></div>

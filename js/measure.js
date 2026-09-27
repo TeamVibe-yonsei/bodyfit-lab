@@ -10,12 +10,14 @@ BF.POINTS = [
   { k: "wR",     n: 6, label: "허리 오른쪽 끝", tip: "같은 높이의 오른쪽 윤곽" },
   { k: "crotch", n: 7, label: "샅(가랑이)",  tip: "두 다리가 갈라지는 지점" }
 ];
+BF.CARD_MM = 85.6; // ISO/IEC 7810 ID-1 (신용·체크·교통카드, 주민등록증, 운전면허증, 대부분의 학생증) 긴 변
+BF.CARD_POINTS = [{ k: "cA", n: "A", label: "카드 긴 변 한쪽 끝" }, { k: "cB", n: "B", label: "카드 긴 변 반대쪽 끝" }];
 BF.DEFAULT_FRAC = { head: [.5, .05], heel: [.5, .96], shL: [.40, .22], shR: [.60, .22], wL: [.44, .42], wR: [.56, .42], crotch: [.5, .55] };
 
 BF.Stage = class {
   constructor(canvas, onChange) {
     this.cv = canvas; this.ctx = canvas.getContext("2d"); this.onChange = onChange;
-    this.img = null; this.pts = null; this.drag = null; this.hover = null;
+    this.img = null; this.pts = null; this.drag = null; this.hover = null; this.useCard = false;
     const down = e => this.down(e), move = e => this.move(e), up = () => this.up();
     canvas.addEventListener("pointerdown", down);
     window.addEventListener("pointermove", move);
@@ -30,13 +32,15 @@ BF.Stage = class {
   resetPoints() {
     this.pts = {};
     for (const k in BF.DEFAULT_FRAC) this.pts[k] = { x: BF.DEFAULT_FRAC[k][0] * this.cv.width, y: BF.DEFAULT_FRAC[k][1] * this.cv.height };
+    this.pts.cA = { x: this.cv.width * 0.78, y: this.cv.height * 0.50 }; this.pts.cB = { x: this.cv.width * 0.90, y: this.cv.height * 0.50 };
     this.onChange && this.onChange();
   }
-  setPoints(p) { this.pts = p; this.draw(); this.onChange && this.onChange(); }
+  setPoints(p) { const keep = { cA: this.pts?.cA, cB: this.pts?.cB }; this.pts = Object.assign({}, p, keep.cA ? keep : {}); if (!this.pts.cA) { this.pts.cA = { x: this.cv.width * 0.78, y: this.cv.height * 0.5 }; this.pts.cB = { x: this.cv.width * 0.9, y: this.cv.height * 0.5 }; } this.draw(); this.onChange && this.onChange(); }
+  setUseCard(on) { this.useCard = !!on; this.draw(); this.onChange && this.onChange(); }
   pos(e) { const r = this.cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * this.cv.width / r.width, y: (e.clientY - r.top) * this.cv.height / r.height }; }
   nearest(q) {
     let best = null, bd = 1e9;
-    for (const k in this.pts) { const d = Math.hypot(this.pts[k].x - q.x, this.pts[k].y - q.y); if (d < bd) { bd = d; best = k; } }
+    for (const k in this.pts) { if (!this.useCard && (k === "cA" || k === "cB")) continue; const d = Math.hypot(this.pts[k].x - q.x, this.pts[k].y - q.y); if (d < bd) { bd = d; best = k; } }
     const scale = this.cv.width / this.cv.getBoundingClientRect().width;
     return bd < 26 * scale ? best : null;
   }
@@ -57,6 +61,12 @@ BF.Stage = class {
     seg(pts.head, { x: pts.head.x, y: pts.heel.y }, "rgba(143,176,255,.7)", true);
     seg(pts.shL, pts.shR, "rgba(109,149,242,.95)"); seg(pts.wL, pts.wR, "rgba(109,149,242,.95)");
     seg(pts.crotch, { x: pts.crotch.x, y: pts.heel.y }, "rgba(109,149,242,.95)");
+    if (this.useCard) {
+      seg(pts.cA, pts.cB, "rgba(95,194,142,.95)");
+      BF.CARD_POINTS.forEach(P => { const p = pts[P.k]; const R = (this.hover === P.k || this.drag === P.k ? 14 : 11) * s;
+        ctx.beginPath(); ctx.arc(p.x, p.y, R, 0, Math.PI * 2); ctx.fillStyle = "#5FC28E"; ctx.fill(); ctx.lineWidth = 2.5 * s; ctx.strokeStyle = "#0F1114"; ctx.stroke();
+        ctx.fillStyle = "#0F1114"; ctx.font = `bold ${12 * s}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(P.n, p.x, p.y + 0.5 * s); });
+    }
     BF.POINTS.forEach(P => {
       const p = pts[P.k]; const R = (this.hover === P.k || this.drag === P.k ? 15 : 12) * s;
       ctx.beginPath(); ctx.arc(p.x, p.y, R, 0, Math.PI * 2);
@@ -67,11 +77,13 @@ BF.Stage = class {
   }
   measure(heightCm) {
     if (!this.img || !this.pts) return {};
-    const p = this.pts, pxH = Math.abs(p.heel.y - p.head.y);
-    if (pxH < 10 || !heightCm) return {};
-    const k = heightCm / pxH, d = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
-    return { height: heightCm, shoulder: d(p.shL, p.shR) * k, waist: d(p.wL, p.wR) * k, leg: Math.abs(p.heel.y - p.crotch.y) * k,
-      pxPerCm: 1 / k };
+    const p = this.pts, pxH = Math.abs(p.heel.y - p.head.y), d = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+    if (pxH < 10) return {};
+    let k, src;
+    if (this.useCard) { const cardPx = d(p.cA, p.cB); if (cardPx < 8) return {}; k = (BF.CARD_MM / 10) / cardPx; src = "card"; }
+    else { if (!heightCm) return {}; k = heightCm / pxH; src = "height"; }
+    return { height: src === "card" ? pxH * k : heightCm, shoulder: d(p.shL, p.shR) * k, waist: d(p.wL, p.wR) * k, leg: Math.abs(p.heel.y - p.crotch.y) * k,
+      pxPerCm: 1 / k, scaleSource: src };
   }
 };
 
