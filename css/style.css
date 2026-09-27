@@ -487,3 +487,9 @@ h3.mt { margin-top: 18px; }
 .ends span:first-child { color: #7FA6F0; }
 .ends span:nth-child(2) { color: var(--muted); }
 .ends span:last-child { color: #F0A070; }
+
+/* 상위/하위는 오른쪽 끝으로 */
+.spec .top { align-items: baseline; }
+.spec .top b .val { margin-left: 8px; }
+.spec .top b .val strong { font-size: 15px; font-weight: 600; color: var(--ink-2); }
+.spec .rank { margin-left: auto; }

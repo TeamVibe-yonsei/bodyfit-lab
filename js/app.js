@@ -119,7 +119,7 @@
       const col = posColor(p.pos);
       const rank = p.topPct <= 50 ? `<small>상위</small><b>${p.topPct.toFixed(0)}%</b>` : `<small>하위</small><b>${p.pct.toFixed(0)}%</b>`;
       const diff = p.value - p.mean; const diffTxt = p.unit === "" ? diff.toFixed(p.fixed1 ? 1 : 2) : (diff >= 0 ? "+" : "") + diff.toFixed(1) + unitTxt;
-      it.innerHTML = `<div class="top"><b>${p.name} <span class="rank" style="--c:${col}">${rank}</span></b>${showVal ? `<span class="val"><strong>${vtxt}</strong></span>` : ""}</div>
+      it.innerHTML = `<div class="top"><b>${p.name}${showVal ? ` <span class="val"><strong>${vtxt}</strong></span>` : ""}</b><span class="rank" style="--c:${col}">${rank}</span></div>
         <div class="bar"><span class="tick" style="left:${100 / 6}%"></span><span class="tick" style="left:${200 / 6}%"></span><span class="tick mean" style="left:50%"></span><span class="tick" style="left:${400 / 6}%"></span><span class="tick" style="left:${500 / 6}%"></span>
           ${showVal ? `<span class="lab" style="left:${p.pos}%">평균보다 ${diffTxt}</span>` : ""}
           <span class="pin" style="left:${p.pos}%;--c:${col}" tabindex="0" aria-label="${p.name} ${vtxt}"></span></div>
