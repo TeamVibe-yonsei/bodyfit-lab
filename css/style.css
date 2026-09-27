@@ -472,3 +472,6 @@ h3.mt { margin-top: 18px; }
 .guide-text h2 { font-size: 20px; margin-bottom: 8px; }
 .guide-text .tips { font-size: 14px; margin-top: 0; }
 .guide-text .legend { margin-top: 14px; }
+
+.spec .rank { border-bottom: 0; padding-bottom: 0; }
+.spec .item:not(:has(.lab)) .bar { margin-top: 12px; }
