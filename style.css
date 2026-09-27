@@ -378,3 +378,16 @@ h3.mt { margin-top: 18px; }
 }
 /* 이전 피팅룸 스타일 무효화 */
 .fit-room, .wardrobe, .studio, .worn, .tabs, .wgrid, .witem { all: revert; }
+
+.seg-btn { padding: 7px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); color: var(--ink); font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.seg-btn:hover { border-color: var(--accent); color: var(--accent); }
+.fr-actions .seg { background: var(--panel-2); }
+.fr-outfit[hidden] { display: none !important; }
+
+.guide-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 22px; }
+.guide-row .guide-line { margin-top: 0; }
+.btn.big { padding: 11px 22px; font-size: 15px; font-weight: 700; border-radius: 10px; }
+.locked { display: none !important; }
+.reveal { animation: reveal .5s ease both; }
+@keyframes reveal { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .reveal { animation: none; } }

@@ -166,7 +166,7 @@ class Avatar3D {
     this.renderer.setSize(size.x, size.y, false); this.camera.aspect = aspect; this.camera.position.copy(camPos); this.controls.target.copy(tgt); this.camera.updateProjectionMatrix();
     return url;
   }
-  resize() { const w = this.el.clientWidth || 300, h = this.el.clientHeight || 400; this.renderer.setSize(w, h, false); this.camera.aspect = w / h; this.camera.updateProjectionMatrix(); }
+  resize() { const w = this.el.clientWidth, h = this.el.clientHeight; if (!w || !h) return; this.renderer.setSize(w, h, false); this.camera.aspect = w / h; this.camera.updateProjectionMatrix(); }
   update({ values, sex, frame, bmiRatio, garments }) {
     this.group.clear();
     const B = bodyRings(values, sex, frame, bmiRatio);

@@ -54,14 +54,14 @@ BF.Stage = class {
     if (!this.img) return; ctx.drawImage(this.img, 0, 0, cv.width, cv.height);
     const s = cv.width / 720;
     const seg = (a, b, color, dash) => { ctx.save(); ctx.lineWidth = 3 * s; ctx.strokeStyle = color; if (dash) ctx.setLineDash([8 * s, 6 * s]); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); ctx.restore(); };
-    seg(pts.head, { x: pts.head.x, y: pts.heel.y }, "rgba(232,149,90,.85)", true);
-    seg(pts.shL, pts.shR, "rgba(59,111,224,.95)"); seg(pts.wL, pts.wR, "rgba(59,111,224,.95)");
-    seg(pts.crotch, { x: pts.crotch.x, y: pts.heel.y }, "rgba(59,111,224,.95)");
+    seg(pts.head, { x: pts.head.x, y: pts.heel.y }, "rgba(143,176,255,.7)", true);
+    seg(pts.shL, pts.shR, "rgba(109,149,242,.95)"); seg(pts.wL, pts.wR, "rgba(109,149,242,.95)");
+    seg(pts.crotch, { x: pts.crotch.x, y: pts.heel.y }, "rgba(109,149,242,.95)");
     BF.POINTS.forEach(P => {
       const p = pts[P.k]; const R = (this.hover === P.k || this.drag === P.k ? 15 : 12) * s;
       ctx.beginPath(); ctx.arc(p.x, p.y, R, 0, Math.PI * 2);
-      ctx.fillStyle = "#E0653B"; ctx.fill(); ctx.lineWidth = 2.5 * s; ctx.strokeStyle = "#fff"; ctx.stroke();
-      ctx.fillStyle = "#fff"; ctx.font = `bold ${13 * s}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillStyle = "#6D95F2"; ctx.fill(); ctx.lineWidth = 2.5 * s; ctx.strokeStyle = "#0F1114"; ctx.stroke();
+      ctx.fillStyle = "#0F1524"; ctx.font = `bold ${13 * s}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
       ctx.fillText(P.n, p.x, p.y + 0.5 * s);
     });
   }

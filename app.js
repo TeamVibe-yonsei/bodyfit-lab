@@ -1,8 +1,8 @@
 /* BodyFit Lab — 화면 제어 v3 */
 (function () {
   "use strict";
-  const $ = id => document.getElementById(id);
-  const S = { sex: "M", age: "20", manual: {}, est: {}, sample: true, garments: [], sel: null, guides: true, photoLoaded: false, tab: "top", editing: null, view: "3d", lastType: null };
+  const $ = id => document.getElementById(id) || Object.assign(document.createElement("div"), { id });
+  const S = { sex: "M", age: "20", manual: {}, est: {}, sample: false, diagnosed: false, garments: [], sel: null, guides: true, photoLoaded: false, tab: "top", editing: null, view: "3d", lastType: null };
   const SAMPLE = { shoulder: 42.5, waist: 27.4, leg: 81.0 };
 
   /* ---------- 저장/복원 ---------- */
@@ -27,7 +27,7 @@
   function loadImage(src) {
     const img = new Image();
     img.onload = () => {
-      stage.setImage(img); S.photoLoaded = true; S.sample = false; $("placeholder").hidden = true; autoDetect();
+      stage.setImage(img); S.photoLoaded = true; S.sample = false; $("placeholder").hidden = true; $("diagBtn").disabled = false; autoDetect();
     };
     img.onerror = () => setStatus("이미지를 열 수 없습니다. JPG/PNG 파일인지 확인하세요.", "err");
     img.src = src;
@@ -44,6 +44,18 @@
       setStatus("숫자를 몸의 올바른 위치에 놓아 주세요", "ok");
     } catch (err) { setStatus("숫자를 몸의 올바른 위치에 놓아 주세요", "err"); }
   }
+
+  /* ---------- 진단 ---------- */
+  function diagnose() {
+    if (!(parseFloat($("height").value) > 0)) { setStatus("키를 입력해 주세요", "err"); $("height").focus(); return; }
+    S.diagnosed = true;
+    ["s2", "s3", "s4"].forEach((id, i) => { const el = $(id); el.classList.remove("locked"); el.classList.add("reveal"); el.style.animationDelay = (i * 0.12) + "s"; });
+    const rep = document.querySelector(".report"); rep.classList.remove("locked"); rep.classList.add("reveal"); rep.style.animationDelay = ".4s";
+    update(); if (BF.av3d?.inst) setTimeout(() => BF.av3d.inst.resize(), 50);
+    $("s2").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  $("diagBtn").addEventListener("click", diagnose);
+  ["height", "ageIn", "weight"].forEach(id => $(id).addEventListener("input", () => { if (!S.photoLoaded && Object.values(S.manual).some(v => parseFloat(v) > 0)) $("diagBtn").disabled = false; }));
 
   /* ---------- 치수: 사진 → 사용값, 직접 입력 시 우선 ---------- */
   function source(k) {
@@ -191,8 +203,8 @@
   }
   function renderWorn() {
     const L = $("wlist"); const values = currentValues();
-    $("outfitCount").textContent = S.garments.length;
-    if (!S.garments.length) { L.innerHTML = '<div class="fr-empty">아래에서 옷을 골라 입혀 보세요</div>'; $("gctrl").hidden = true; return; }
+    const panel = document.querySelector(".fr-outfit"); if (panel) panel.hidden = !S.garments.length;
+    if (!S.garments.length) { L.innerHTML = ""; $("gctrl").hidden = true; return; }
     const order = S.garments.slice().sort((a, b) => BF.KIND_ORDER[b.kind] - BF.KIND_ORDER[a.kind]);
     L.innerHTML = order.map(g => `<div class="wl ${S.sel === g.id ? "sel" : ""}" data-id="${g.id}"><img src="${g.url}" alt=""><div><div class="wn">${g.name} <small style="color:var(--muted);font-weight:400">${BF.KIND_LABEL[g.kind]}</small></div>
       <div class="fitline">${g.refFrac ? `<div class="sizechips" data-size="${g.id}">${BF.sizeKeys(g.kind).map(k => `<button data-k="${k}" class="${k == g.size ? "on" : ""}">${k}</button>`).join("")}</div>` : `<select data-kind="${g.id}">${Object.entries(BF.KIND_LABEL).map(([k, v]) => `<option value="${k}" ${k === g.kind ? "selected" : ""}>${v}</option>`).join("")}</select>`}</div>
@@ -229,7 +241,7 @@
   window.addEventListener("av3d-ready", () => { BF.av3d.mount($("studio3d")); render3d(currentValues()); });
   if (BF.av3d) { BF.av3d.mount($("studio3d")); }
   $("viewSeg").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; S.view = b.dataset.v; [...$("viewSeg").children].forEach(x => x.classList.toggle("on", x === b));
-    $("studio3d").hidden = S.view !== "3d"; $("hint3d").hidden = S.view !== "3d"; $("spinBtn").hidden = S.view !== "3d"; $("avatar").hidden = S.view !== "2d"; $("guideBtn").hidden = S.view !== "2d"; if (BF.av3d?.inst) BF.av3d.inst.resize(); });
+    $("studio3d").hidden = S.view !== "3d"; $("hint3d").hidden = S.view !== "3d"; $("avatar").hidden = S.view !== "2d"; $("guideBtn").hidden = S.view !== "2d"; if (BF.av3d?.inst) BF.av3d.inst.resize(); });
   let gdrag = null;
   const svgPos = e => { const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); };
   svg.addEventListener("pointerdown", e => { const im = e.target.closest("image"); if (!im) return; const gm = S.garments.find(g => g.id === im.dataset.id); S.sel = gm.id; const q = svgPos(e); gdrag = { gm, sx: q.x - gm.dx, sy: q.y - gm.dy }; svg.setPointerCapture(e.pointerId); renderWorn(); syncCtrl(); renderAvatar(currentValues()); e.preventDefault(); });
@@ -237,7 +249,6 @@
   svg.addEventListener("pointerup", () => { gdrag = null; });
   svg.addEventListener("wheel", e => { const im = e.target.closest("image"); if (!im) return; e.preventDefault(); const gm = S.garments.find(g => g.id === im.dataset.id); gm.scale = Math.max(.5, Math.min(2, gm.scale * (e.deltaY < 0 ? 1.04 : 0.96))); syncCtrl(); renderAvatar(currentValues()); }, { passive: false });
   $("guideBtn").addEventListener("click", () => { S.guides = !S.guides; save(); renderAvatar(currentValues()); });
-  $("spinBtn").addEventListener("click", () => { if (!BF.av3d?.inst) return; const c = BF.av3d.inst.controls; c.autoRotate = !c.autoRotate; c.autoRotateSpeed = 1.6; $("spinBtn").classList.toggle("on", c.autoRotate); });
 
   /* ---------- PNG ---------- */
   function svgToPng(svgEl, w, h, bg) {
