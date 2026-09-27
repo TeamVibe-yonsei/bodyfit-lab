@@ -135,10 +135,11 @@ BF.garmentPlacement = function (gm, g) {
   const s = gm.scale;
   let w, x, y;
   const known = gm.refFrac && gm.sizeCm; // 규격을 아는 아이템: 실제 cm 로 배치
-  if (gm.kind === "top" || gm.kind === "dress") { w = known ? gm.sizeCm * g.k / gm.refFrac * s : g.sh * 1.16 * s; x = g.cx - w / 2; y = g.shY - 6; }
-  else if (gm.kind === "outer") { w = known ? gm.sizeCm * g.k / gm.refFrac * s : g.sh * 1.26 * s; x = g.cx - w / 2; y = g.shY - 8; }
-  else if (gm.kind === "shoes") { w = known ? gm.sizeCm * g.k / gm.refFrac * s : g.hip * 0.9 * s; x = g.cx - w / 2; y = g.bottom - w * gm.h / gm.w * 0.86; }
-  else { w = known ? gm.sizeCm * g.k / gm.refFrac * s : g.hip * 1.06 * s; x = g.cx - w / 2; y = g.waistY - 2; }
+  const kU = g.k, kL = g.kLow || g.k;    // 상체·하체 px/cm (마네킹 뷰는 하체를 키 기준으로)
+  if (gm.kind === "top" || gm.kind === "dress") { w = known ? gm.sizeCm * kU / gm.refFrac * s : g.sh * 1.16 * s; x = g.cx - w / 2; y = g.shY - 6; }
+  else if (gm.kind === "outer") { w = known ? gm.sizeCm * kU / gm.refFrac * s : g.sh * 1.26 * s; x = g.cx - w / 2; y = g.shY - 8; }
+  else if (gm.kind === "shoes") { w = known ? gm.sizeCm * kL / gm.refFrac * s : g.hip * 0.9 * s; x = g.cx - w / 2; y = g.bottom - w * gm.h / gm.w * 0.86; }
+  else { w = known ? gm.sizeCm * kL / gm.refFrac * s : g.hip * 1.06 * s; x = g.cx - w / 2; y = g.waistY - 2; }
   const h = w * gm.h / gm.w * gm.ys;
   return { x: x + gm.dx, y: y + gm.dy, w, h };
 };

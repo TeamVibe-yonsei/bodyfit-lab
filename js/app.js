@@ -273,10 +273,11 @@
     const sc = 420 / A.h, offX = (320 - A.w * sc) / 2;
     const X = x => offX + x * sc, Y = y => y * sc;
     const H = values.height || 170;
-    const k = (A.bottom - A.top) * sc / H;                 // viewBox px per cm (키 기준)
-    const sh = (A.shR - A.shL) * sc * 0.86, wa = (A.wR - A.wL) * sc;
-    return { key, url: BF.mannUrl(key), imgW: A.w * sc, imgH: A.h * sc, offX, cx: X((A.shL + A.shR) / 2), shY: Y(A.shY), waistY: Y(A.wY), crotchY: Y(A.crotch), hipY: Y(A.crotch) - H * 0.055 * k,
-      bottom: Y(A.bottom), top: Y(A.top), sh, wa, hip: Math.max(wa * 1.2, sh * 0.9), k, S: values.shoulder || 40, W: values.waist || 28, L: values.leg || 78, H };
+    const bodyPx = (A.bottom - A.top) * sc, Sv = values.shoulder || 40;
+    const sh = (A.shR - A.shL) * sc, wa = (A.wR - A.wL) * sc;   // 마네킹의 어깨(팔 포함)·허리 폭 (viewBox px)
+    const k = sh / Sv, kLow = bodyPx / H * 1.08;                // 옷 크기는 "내 어깨너비 대비" 비율로 — 마네킹 몸에 맞춰 보이도록
+    return { key, url: BF.mannUrl(key), imgW: A.w * sc, imgH: A.h * sc, offX, cx: X((A.shL + A.shR) / 2), shY: Y(A.shY) - bodyPx * 0.035, waistY: Y(A.wY), crotchY: Y(A.crotch), hipY: Y(A.crotch) - bodyPx * 0.05,
+      bottom: Y(A.bottom), top: Y(A.top), sh, wa, hip: Math.max(wa * 1.2, sh * 0.9), k, kLow, S: values.shoulder || 40, W: values.waist || 28, L: values.leg || 78, H };
   }
   function renderMann(values) {
     const g = mannGeometry(values); mannGeo = g; if (!g) { mannSvg.innerHTML = ""; return; }
