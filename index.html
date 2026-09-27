@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BodyFit Lab</title>
+<meta name="description" content="전신 사진 한 장으로 어깨너비·허리너비·다리길이를 추정하고, 사이즈코리아 국민 인체치수 대비 내 위치와 체형, 어울리는 옷, 아바타 피팅까지 확인하는 웹 도구">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Noto+Sans+KR:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232F5FD9'/%3E%3Cpath d='M8 22V10h4a4 4 0 0 1 0 8H8m0-4h5a4 4 0 0 1 0 8H8' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+</head>
+<body>
+<nav class="nav"><div class="wrap">
+  <a class="brand" href="#top"><span class="logo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 17V6h4a3 3 0 0 1 0 6H6m0-1h5a3 3 0 0 1 0 6H6"/></svg></span>BodyFit Lab</a>
+  <div class="nav-steps"><a href="#s1">1 사진</a><a href="#s2">2 치수·스펙트럼</a><a href="#s3">3 체형·추천</a><a href="#s4">4 아바타 피팅</a></div>
+  <div class="nav-actions"><button class="btn ghost" id="themeBtn" title="테마 전환">테마</button><button class="btn ghost" id="resetAll">초기화</button></div>
+</div></nav>
+
+<main class="wrap" id="top">
+<header class="hero">
+  <div>
+    <p class="eyebrow">Photo → Measure → Fit</p>
+    <h1>전신 사진 한 장으로 내 치수, 내 체형, 나에게 맞는 옷을 확인하세요.</h1>
+    <p class="lede">사진은 브라우저 안에서만 처리되어 어디로도 전송되지 않습니다. 추정한 치수는 사이즈코리아 제8차 한국인 인체치수조사 분포 위에 놓여 "또래 대비 어디쯤인지"가 표시되고, 체형 유형과 어울리는 옷, 옷을 입힌 아바타까지 이어집니다.</p>
+  </div>
+  <div class="hero-side">
+    <div class="stat-row">
+      <div class="stat"><b>7</b><span>기준점으로 3개 치수 추정</span></div>
+      <div class="stat"><b>±3σ</b><span>국민 인체치수 분포 스펙트럼</span></div>
+      <div class="stat"><b>0</b><span>서버 전송 사진 (로컬 처리)</span></div>
+    </div>
+  </div>
+</header>
+
+<!-- ───────── Step 1 ───────── -->
+<section class="step" id="s1">
+  <div class="step-head"><span class="step-num">STEP 1</span><h2>사진 올리고 기준점 맞추기</h2><p>타이트한 옷을 입고 정면으로 곧게 선 전신 사진이 가장 정확합니다. 키를 입력하면 사진의 픽셀이 cm로 환산됩니다.</p></div>
+  <div class="grid-2">
+    <div class="panel">
+      <div class="row">
+        <label class="btn primary file">사진 선택<input type="file" id="photo" accept="image/*"></label>
+        <button class="btn" id="camBtn">카메라로 촬영</button>
+        <button class="btn" id="autoBtn" disabled>자동 인식</button>
+        <button class="btn" id="resetPts" disabled>기준점 초기화</button>
+      </div>
+      <div class="stage" id="stage">
+        <canvas id="cv" width="720" height="520"></canvas>
+        <div class="placeholder" id="placeholder"><div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="5" r="2.5"/><path d="M8 22v-7l-2-6h12l-2 6v7M6 9l-2 4M18 9l2 4"/></svg>
+          <div>전신 사진을 올리면 자동으로 기준점을 잡습니다.<br>점을 드래그해 정확한 위치로 옮기세요.</div>
+        </div></div>
+      </div>
+      <div class="status" id="status"><span class="dot"></span><span>사진을 기다리는 중</span></div>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="panel">
+      <h3>기본 정보</h3>
+      <div class="row">
+        <div class="field">성별<div class="seg" id="sexSeg"><button data-v="M" class="on">남성</button><button data-v="F">여성</button></div></div>
+        <div class="field">연령대<select id="age"><option value="T">16~19세</option><option value="20" selected>20~26세</option><option value="30">27~39세</option><option value="40">40대</option></select></div>
+        <label class="field">키 (cm) <input type="number" id="height" value="174" min="120" max="220" step="0.1"></label>
+        <label class="field">몸무게 (kg, 선택) <input type="number" id="weight" placeholder="—" min="30" max="200" step="0.1"></label>
+      </div>
+      <h3 style="margin-top:16px">촬영 가이드</h3>
+      <ul class="tips">
+        <li>카메라를 <b>허리 높이</b>에 두고 2.5~3m 거리에서 정면 촬영 (셀카 렌즈·광각은 왜곡)</li>
+        <li>발끝까지 프레임에 들어오게, 팔은 몸에서 살짝 떼고, 발은 어깨너비로</li>
+        <li>몸 윤곽이 보이는 옷 + 단색 배경 + 균일한 조명</li>
+        <li>정확한 값은 줄자 실측으로 확인하고 아래 표에 직접 입력하면 우선 적용됩니다</li>
+      </ul>
+      <h3 style="margin-top:16px">기준점 설명</h3>
+      <div class="legend" id="legend2"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── Step 2 ───────── -->
+<section class="step" id="s2">
+  <div class="step-head"><span class="step-num">STEP 2</span><h2>치수와 또래 대비 위치</h2><p>스펙트럼 양 끝은 같은 성별·연령대 분포의 평균 ±3σ(약 0.1%~99.9%)입니다. 점 위에 마우스를 올리면 자세한 값이 보입니다.</p></div>
+  <div class="grid-2">
+    <div class="panel">
+      <h3>측정 치수 <span class="chip muted" id="srcChip">직접 입력</span></h3>
+      <table class="m"><thead><tr><th>항목</th><th>사진 추정</th><th>직접 입력</th><th>사용 값</th></tr></thead><tbody id="mrows"></tbody></table>
+      <p class="note">허리 <b>둘레</b>는 정면 폭만으로 추정할 수 없어 표시하지 않습니다. 사진 1장 추정치의 통상 오차는 ±2~3cm입니다.</p>
+      <details class="ref"><summary>기준 통계 보기 (사이즈코리아 8차, 성별·연령대별 평균 / 표준편차)</summary><div class="ref-table" id="refTable"></div></details>
+    </div>
+    <div class="panel">
+      <h3>스펙트럼 <span class="chip" id="groupChip"></span></h3>
+      <div class="spec" id="spec"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── Step 3 ───────── -->
+<section class="step" id="s3">
+  <div class="step-head"><span class="step-num">STEP 3</span><h2>체형 유형과 어울리는 옷</h2><p>어깨·허리의 상대적 위치(z-점수 차)와 다리 비율·키로 체형을 나누고, 유형별 스타일 규칙을 제시합니다.</p></div>
+  <div class="panel">
+    <div id="typeCard" class="empty">어깨너비·허리너비·다리길이·키가 모두 있으면 체형과 추천이 표시됩니다.</div>
+    <div class="reco" id="reco"></div>
+    <div id="sizeBox" hidden>
+      <h3 style="margin-top:18px">상의 사이즈 가이드 <span class="chip muted">국내 브랜드 실측 어깨 기준</span></h3>
+      <div class="sizes" id="sizes"></div>
+      <p class="note">의류 어깨너비 = 몸 어깨너비 + 핏별 여유분(슬림 1.5 / 레귤러 3.5 / 세미오버 5.5 / 오버 8cm). 브랜드별 실측표와 대조해 최종 확인하세요.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── Step 4 ───────── -->
+<section class="step" id="s4">
+  <div class="step-head"><span class="step-num">STEP 4</span><h2>아바타에 옷 입혀 보기</h2><p>치수를 비율대로 반영한 백색 아바타입니다. 쇼핑몰 상품 컷을 올리면 배경이 제거되어 어깨(상의)·허리(하의) 기준으로 자동 배치되고, 드래그로 옮기고 휠로 크기를 조절할 수 있습니다.</p></div>
+  <div class="av-wrap">
+    <div class="av-box">
+      <svg id="avatar" viewBox="0 0 320 420" role="img" aria-label="치수를 반영한 백색 아바타"></svg>
+      <div class="av-tools"><button class="btn" id="guideBtn">치수선</button><button class="btn" id="exportAv">PNG 저장</button></div>
+    </div>
+    <div class="panel">
+      <div class="row">
+        <label class="btn primary file">옷 이미지 추가<input type="file" id="garment" accept="image/*" multiple></label>
+        <div class="field">부위<select id="gkind"><option value="top">상의</option><option value="outer">아우터</option><option value="bottom">하의</option><option value="dress">원피스</option><option value="shoes">신발</option></select></div>
+      </div>
+      <div class="glist" id="glist"></div>
+      <div class="ctrl" id="gctrl" hidden>
+        <label>배경 제거 <input type="range" id="gthr" min="0" max="80" value="34"><output id="gthrO">34</output></label>
+        <label>크기 <input type="range" id="gscale" min="50" max="200" value="100"><output id="gscaleO">100%</output></label>
+        <label>세로 비율 <input type="range" id="gys" min="60" max="160" value="100"><output id="gysO">100%</output></label>
+        <div class="row"><button class="btn" id="gcenter">위치 초기화</button><button class="btn" id="gdel">이 옷 제거</button></div>
+      </div>
+      <p class="note">배경이 밝고 옷만 있는 상품 컷이 가장 잘 올라갑니다. 아바타는 2D 정면 실루엣이며, 실제 착용감(두께·소재)은 반영되지 않습니다.</p>
+    </div>
+  </div>
+</section>
+
+<section class="report">
+  <div class="panel">
+    <div><h3>결과 요약</h3><pre id="summary">아직 결과가 없습니다.</pre></div>
+    <div class="row"><button class="btn" id="copyBtn">요약 복사</button><button class="btn primary" id="shareBtn">결과 카드 PNG</button></div>
+  </div>
+</section>
+</main>
+
+<footer><div class="wrap"><div class="cols">
+  <div><h4>데이터 출처</h4><ul>
+    <li>국가기술표준원, 제8차 한국인 인체치수조사(2020~2023) — 김지은·김은경(2023) 한국의상디자인학회지 25(1); 김은경·김지은(2022) 24(3)에 수록된 직접측정 통계 인용</li>
+    <li>체형 분류: Simmons·Istook·Devarajan(2004) FFIT; Jung·Kang·Kim(2026) Sci. Rep.; 사이즈코리아 한국인의 체형분류</li>
+    <li>포즈 추정: Google MediaPipe Pose (BlazePose)</li></ul></div>
+  <div><h4>개인정보</h4><ul><li>사진·치수는 이 브라우저 안에서만 처리되며 서버로 전송되지 않습니다.</li><li>입력값은 이 기기의 브라우저 저장소에만 남으며 "초기화"로 삭제됩니다.</li></ul></div>
+  <div><h4>정확도 안내</h4><ul><li>사진 1장 기반 추정치는 자세·거리·의복에 따라 ±2~3cm 오차가 있습니다.</li><li>연세대학교 학생자율연구 BodyFit Lab 프로젝트 — 연구용 프로토타입</li></ul></div>
+</div></div></footer>
+
+<script src="vendor/pose/pose.js"></script>
+<script src="js/reference.js"></script>
+<script src="js/classify.js"></script>
+<script src="js/measure.js"></script>
+<script src="js/avatar.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
