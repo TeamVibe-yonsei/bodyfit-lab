@@ -7,7 +7,7 @@
 <meta name="description" content="사진 한 장으로 내 체형과 옷 핏을 확인하는 웹 서비스">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Noto+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/style.css?v=28">
+<link rel="stylesheet" href="css/style.css?v=29">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236D95F2'/%3E%3Cpath d='M8 10l8 13 8-13M12 6.5c1.3 1 2.7 1 4 0s2.7-1 4 0' fill='none' stroke='%230F1524' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 </head>
 <body>
@@ -23,7 +23,7 @@
 </header>
 
 <section class="guide" id="guide">
-  <div class="pose-ex"><figure><img src="img/pose-basic.jpg" alt="기본 촬영 자세 예시"><figcaption>기본 자세</figcaption></figure><figure><img src="img/pose-card.jpg?v=28" alt="카드 정밀 측정 자세 예시"><figcaption>카드 정밀 측정</figcaption></figure></div>
+  <div class="pose-ex"><figure><img src="img/pose-basic.jpg" alt="기본 촬영 자세 예시"><figcaption>기본 자세</figcaption></figure><figure><img src="img/pose-card.jpg?v=29" alt="카드 정밀 측정 자세 예시"><figcaption>카드 정밀 측정</figcaption></figure></div>
   <div class="guide-text">
     <h2>타이트한 옷을 입은 사진이 좋아요</h2>
     <ul class="tips">
@@ -98,13 +98,14 @@
   <div class="step-head"><span class="step-num">STEP 4</span><h2>피팅룸</h2></div>
   <div class="fr">
     <div class="fr-stage">
-      <div id="studio3d"></div>
+      <div id="studio3d" hidden></div>
+      <svg id="mann" viewBox="0 0 320 420" role="img" aria-label="체형별 마네킹"></svg>
       <svg id="avatar" viewBox="0 0 320 420" role="img" aria-label="치수를 반영한 아바타" hidden></svg>
       <div id="aiView" class="ai-view" hidden><img id="aiImg" alt="AI 실사 착용 결과"><div class="ai-empty" id="aiEmpty">옷을 고른 뒤 "AI 실사 착용"을 누르면 실사 이미지가 여기에 나타납니다</div></div>
       <div class="fr-top">
         <div></div>
         <div class="fr-actions">
-          <div class="seg" id="viewSeg"><button data-v="3d" class="on">3D</button><button data-v="2d">2D</button><button data-v="ai">실사</button></div>
+          <div class="seg" id="viewSeg"><button data-v="mann" class="on">마네킹</button><button data-v="3d">3D</button><button data-v="2d">2D</button><button data-v="ai">실사</button></div>
           <button class="seg-btn primary-outline" id="aiBtn">AI 실사 착용</button>
           <button class="seg-btn" id="guideBtn" hidden>치수선</button>
           <button class="seg-btn" id="exportAv">PNG</button>
@@ -141,18 +142,19 @@
 </main>
 
 <footer><div class="wrap">
-  <p>Team Vibe · 연세대학교 학생자율연구 · 데이터: 국가기술표준원 제8차 한국인 인체치수조사 · 포즈 추정: Google MediaPipe · <span id="ver">v28</span></p>
+  <p>Team Vibe · 연세대학교 학생자율연구 · 데이터: 국가기술표준원 제8차 한국인 인체치수조사 · 포즈 추정: Google MediaPipe · <span id="ver">v29</span></p>
 </div></footer>
 
 <script type="importmap">{"imports":{"three":"./vendor/three/three.module.js","three/addons/":"./vendor/three/addons/"}}</script>
-<script type="module" src="js/avatar3d.js?v=28"></script>
-<script src="vendor/pose/pose.js?v=28"></script>
-<script src="js/reference.js?v=28"></script>
-<script src="js/classify.js?v=28"></script>
-<script src="js/measure.js?v=28"></script>
-<script src="js/avatar.js?v=28"></script>
-<script src="js/garments.js?v=28"></script>
-<script src="js/ai.js?v=28"></script>
-<script src="js/app.js?v=28"></script>
+<script type="module" src="js/avatar3d.js?v=29"></script>
+<script src="vendor/pose/pose.js?v=29"></script>
+<script src="js/reference.js?v=29"></script>
+<script src="js/classify.js?v=29"></script>
+<script src="js/measure.js?v=29"></script>
+<script src="js/avatar.js?v=29"></script>
+<script src="js/mannequin.js?v=29"></script>
+<script src="js/garments.js?v=29"></script>
+<script src="js/ai.js?v=29"></script>
+<script src="js/app.js?v=29"></script>
 </body>
 </html>

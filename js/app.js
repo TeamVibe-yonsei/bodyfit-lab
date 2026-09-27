@@ -2,7 +2,7 @@
 (function () {
   "use strict";
   const $ = id => document.getElementById(id) || Object.assign(document.createElement("div"), { id });
-  const S = { sex: "M", age: "20", manual: {}, est: {}, sample: false, diagnosed: false, garments: [], sel: null, guides: true, photoLoaded: false, tab: "top", editing: null, view: "3d", lastType: null };
+  const S = { sex: "M", age: "20", manual: {}, est: {}, sample: false, diagnosed: false, garments: [], sel: null, guides: true, photoLoaded: false, tab: "top", editing: null, view: "mann", lastType: null };
   const SAMPLE = { shoulder: 42.5, waist: 27.4, leg: 81.0 };
 
   /* ---------- 저장/복원 ---------- */
@@ -264,8 +264,36 @@
     s += gs.map(gm => { const p = BF.garmentPlacement(gm, geo); return `<image data-id="${gm.id}" href="${gm.url}" x="${p.x.toFixed(1)}" y="${p.y.toFixed(1)}" width="${p.w.toFixed(1)}" height="${p.h.toFixed(1)}" preserveAspectRatio="none"/>` +
       (S.sel === gm.id ? `<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" fill="none" stroke="var(--accent)" stroke-dasharray="4 3" stroke-width="1" pointer-events="none"/>` : ""); }).join("");
     svg.innerHTML = s;
+    renderMann(values);
     render3d(values);
   }
+  const mannSvg = $("mann"); let mannGeo = null;
+  function mannGeometry(values) {
+    const key = BF.mannKey(S.sex, S.lastType?.frame); const A = BF.MANNEQUIN[key]; if (!A) return null;
+    const sc = 420 / A.h, offX = (320 - A.w * sc) / 2;
+    const X = x => offX + x * sc, Y = y => y * sc;
+    const H = values.height || 170;
+    const k = (A.bottom - A.top) * sc / H;                 // viewBox px per cm (키 기준)
+    const sh = (A.shR - A.shL) * sc * 0.86, wa = (A.wR - A.wL) * sc;
+    return { key, url: BF.mannUrl(key), imgW: A.w * sc, imgH: A.h * sc, offX, cx: X((A.shL + A.shR) / 2), shY: Y(A.shY), waistY: Y(A.wY), crotchY: Y(A.crotch), hipY: Y(A.crotch) - H * 0.055 * k,
+      bottom: Y(A.bottom), top: Y(A.top), sh, wa, hip: Math.max(wa * 1.2, sh * 0.9), k, S: values.shoulder || 40, W: values.waist || 28, L: values.leg || 78, H };
+  }
+  function renderMann(values) {
+    const g = mannGeometry(values); mannGeo = g; if (!g) { mannSvg.innerHTML = ""; return; }
+    let s = `<image class="base" href="${g.url}" x="${g.offX.toFixed(1)}" y="0" width="${g.imgW.toFixed(1)}" height="${g.imgH.toFixed(1)}" preserveAspectRatio="xMidYMid meet"/>`;
+    const gs = S.garments.slice().sort((a, b) => BF.KIND_ORDER[a.kind] - BF.KIND_ORDER[b.kind]);
+    s += gs.map(gm => { const p = BF.garmentPlacement(gm, g); return `<image data-id="${gm.id}" href="${gm.url}" x="${p.x.toFixed(1)}" y="${p.y.toFixed(1)}" width="${p.w.toFixed(1)}" height="${p.h.toFixed(1)}" preserveAspectRatio="none"/>` +
+      (S.sel === gm.id ? `<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" fill="none" stroke="var(--accent)" stroke-dasharray="4 3" stroke-width="1" pointer-events="none"/>` : ""); }).join("");
+    mannSvg.innerHTML = s;
+  }
+  // 마네킹 뷰 드래그·휠
+  let mdrag = null;
+  const mPos = e => { const pt = mannSvg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; return pt.matrixTransform(mannSvg.getScreenCTM().inverse()); };
+  mannSvg.addEventListener("pointerdown", e => { const im = e.target.closest("image:not(.base)"); if (!im) return; const gm = S.garments.find(g => g.id === im.dataset.id); S.sel = gm.id; const q = mPos(e); mdrag = { gm, sx: q.x - gm.dx, sy: q.y - gm.dy }; mannSvg.setPointerCapture(e.pointerId); renderWorn(); syncCtrl(); renderMann(currentValues()); e.preventDefault(); });
+  mannSvg.addEventListener("pointermove", e => { if (!mdrag) return; const q = mPos(e); mdrag.gm.dx = q.x - mdrag.sx; mdrag.gm.dy = q.y - mdrag.sy; renderMann(currentValues()); });
+  mannSvg.addEventListener("pointerup", () => { mdrag = null; });
+  mannSvg.addEventListener("wheel", e => { const im = e.target.closest("image:not(.base)"); if (!im) return; e.preventDefault(); const gm = S.garments.find(g => g.id === im.dataset.id); gm.scale = Math.max(.5, Math.min(2, gm.scale * (e.deltaY < 0 ? 1.04 : 0.96))); syncCtrl(); renderMann(currentValues()); }, { passive: false });
+  async function mannB64() { const g = mannGeometry(currentValues()); return g ? await BF.ai.toPng(g.url, 1024) : null; }
   function render3d(values) {
     if (!BF.av3d) return;
     const w = values.weight, h = (values.height || 170) / 100; const ref = BF.REF[group()];
@@ -275,7 +303,7 @@
   window.addEventListener("av3d-ready", () => { BF.av3d.mount($("studio3d")); render3d(currentValues()); });
   if (BF.av3d) { BF.av3d.mount($("studio3d")); }
   $("viewSeg").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; S.view = b.dataset.v; [...$("viewSeg").children].forEach(x => x.classList.toggle("on", x === b));
-    $("studio3d").hidden = S.view !== "3d"; $("hint3d").hidden = S.view !== "3d"; $("avatar").hidden = S.view !== "2d"; $("guideBtn").hidden = S.view !== "2d"; $("aiView").hidden = S.view !== "ai"; if (BF.av3d?.inst) BF.av3d.inst.resize(); });
+    $("studio3d").hidden = S.view !== "3d"; $("hint3d").hidden = S.view !== "3d"; $("avatar").hidden = S.view !== "2d"; $("mann").hidden = S.view !== "mann"; $("guideBtn").hidden = S.view !== "2d"; $("aiView").hidden = S.view !== "ai"; if (BF.av3d?.inst) BF.av3d.inst.resize(); renderAvatar(currentValues()); });
   function setView(v) { const b = [...$("viewSeg").children].find(x => x.dataset.v === v); if (b) b.click(); }
   let gdrag = null;
   const svgPos = e => { const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); };
@@ -298,7 +326,7 @@
     });
   }
   const download = (canvas, name) => { const a = document.createElement("a"); a.download = name; a.href = canvas.toDataURL("image/png"); a.click(); };
-  $("exportAv").addEventListener("click", async () => { if (S.view === "ai" && S.aiResult) { const a = document.createElement("a"); a.download = "teamvibe_ai.png"; a.href = S.aiResult; a.click(); return; } if (S.view === "3d" && BF.av3d?.inst) { const a = document.createElement("a"); a.download = "teamvibe_avatar_3d.png"; a.href = BF.av3d.inst.snapshot(1200, 1600); a.click(); return; } const c = await svgToPng(svg, 960, 1260, getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#fff"); download(c, "teamvibe_avatar.png"); });
+  $("exportAv").addEventListener("click", async () => { if (S.view === "mann") { const c = await svgToPng(mannSvg, 960, 1260, "#0F1114"); download(c, "teamvibe_mannequin.png"); return; } if (S.view === "ai" && S.aiResult) { const a = document.createElement("a"); a.download = "teamvibe_ai.png"; a.href = S.aiResult; a.click(); return; } if (S.view === "3d" && BF.av3d?.inst) { const a = document.createElement("a"); a.download = "teamvibe_avatar_3d.png"; a.href = BF.av3d.inst.snapshot(1200, 1600); a.click(); return; } const c = await svgToPng(svg, 960, 1260, getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#fff"); download(c, "teamvibe_avatar.png"); });
   $("shareBtn").addEventListener("click", async () => {
     const values = currentValues(); const spec = BF.spectrum(values, group()); const c = BF.classify(spec, values, S.sex);
     const W = 1080, H = 1350; const cv = document.createElement("canvas"); cv.width = W; cv.height = H; const x = cv.getContext("2d");
@@ -345,7 +373,7 @@
       </div>
       <div class="opt">
         <label><input type="radio" name="aiBase" value="photo" ${S.photoLoaded ? "checked" : "disabled"}> 내 사진에 입히기${S.photoLoaded ? "" : " (STEP 1 사진 필요)"}</label>
-        <label><input type="radio" name="aiBase" value="model" ${S.photoLoaded ? "" : "checked"}> AI 기본 모델에 입히기</label>
+        <label><input type="radio" name="aiBase" value="model" ${S.photoLoaded ? "" : "checked"}> 마네킹에 입히기</label>
         <label><input type="radio" name="aiBase" value="flat"> 코디 플랫레이 컷</label>
       </div>
       <div class="prog" id="aiProg" hidden><span class="dot"></span><span id="aiProgT">생성 중… 20~40초 걸립니다</span></div>
@@ -371,8 +399,8 @@
         let personB64;
         if (base === "photo") { personB64 = await BF.ai.toPng(stage.img.src, 1024); }
         else {
-          if (!aiModelB64) { modal.querySelector("#aiProgT").textContent = "기본 모델 생성 중… (처음 한 번)"; const url = await BF.ai.makeModel({ sex: S.sex, height: used("height") || 170, frame: S.lastType?.frame, key }); aiModelB64 = url.split(",")[1]; }
-          personB64 = aiModelB64;
+          personB64 = await mannB64();
+          if (!personB64) { if (!aiModelB64) { modal.querySelector("#aiProgT").textContent = "기본 모델 생성 중… (처음 한 번)"; const url = await BF.ai.makeModel({ sex: S.sex, height: used("height") || 170, frame: S.lastType?.frame, key }); aiModelB64 = url.split(",")[1]; } personB64 = aiModelB64; }
         }
         modal.querySelector("#aiProgT").textContent = "옷 입히는 중… 20~40초";
         const gs = await garmentPngs(); const v = currentValues();
@@ -388,6 +416,7 @@
   const loadImg = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = src; });
   async function avatarSnapshot() {
     if (S.view === "ai" && S.aiResult) return await loadImg(S.aiResult);
+    if (S.view === "mann") { const c = await svgToPng(mannSvg, 640, 840, "rgba(0,0,0,0)"); return await loadImg(c.toDataURL("image/png")); }
     if (S.view === "3d" && BF.av3d?.inst) return await loadImg(BF.av3d.inst.snapshot(900, 1200));
     const c = await svgToPng(svg, 640, 840, "rgba(0,0,0,0)"); return await loadImg(c.toDataURL("image/png"));
   }
