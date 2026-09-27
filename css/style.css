@@ -460,3 +460,15 @@ h3.mt { margin-top: 18px; }
 .toggle .sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--ink); transition: left .2s; }
 .toggle input:checked + .sw { background: var(--good); }
 .toggle input:checked + .sw::after { left: 18px; background: var(--bg); }
+
+.pose-ex { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 6px 0 12px; }
+.pose-ex figure { margin: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--panel-2); }
+.pose-ex img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
+.pose-ex figcaption { font-size: 12px; font-weight: 600; color: var(--ink-2); text-align: center; padding: 6px 0; }
+
+.guide { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 22px; align-items: start; margin-top: 22px; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+@media (max-width: 860px) { .guide { grid-template-columns: 1fr; } }
+.guide .pose-ex { margin: 0; }
+.guide-text h2 { font-size: 20px; margin-bottom: 8px; }
+.guide-text .tips { font-size: 14px; margin-top: 0; }
+.guide-text .legend { margin-top: 14px; }
