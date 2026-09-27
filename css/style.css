@@ -422,3 +422,8 @@ h3.mt { margin-top: 18px; }
 .rlist li::before { content: ""; position: absolute; left: 12px; top: 15px; width: 8px; height: 8px; border-radius: 50%; }
 .rlist li.no { background: var(--warn-soft); color: var(--warn); } .rlist li.no::before { background: var(--warn); }
 .rlist li.ok { background: var(--accent-soft); color: var(--accent); } .rlist li.ok::before { background: var(--accent); }
+
+.ref { margin-top: 14px; }
+.ref-table table { width: 100%; }
+.ref-table th, .ref-table td { text-align: right; }
+.ref-table th:first-child, .ref-table td:first-child { text-align: left; }

@@ -143,7 +143,7 @@
     const groups = [["T", "16~19세"], ["20", "20~26세"], ["30", "27~39세"], ["40", "40대"]];
     const rows = [["height", "키"], ["weight", "몸무게"], ["bmi", "BMI"], ["shoulder", "어깨너비"], ["waist", "허리너비"], ["leg", "다리길이"], ["chestC", "가슴둘레"], ["waistC", "허리둘레"], ["hipC", "엉덩이둘레"]];
     let h = "<table><thead><tr><th>항목</th>" + groups.map(g => `<th>${g[1]}${BF.REF[sex + g[0]].status === "approx" ? "*" : ""}</th>`).join("") + "</tr></thead><tbody>";
-    rows.forEach(([k, name]) => { h += `<tr><td>${name}</td>` + groups.map(g => { const v = BF.REF[sex + g[0]][k]; return `<td>${v ? v[0] : "—"}</td>`; }).join("") + "</tr>"; });
+    rows.forEach(([k, name]) => { h += `<tr><td>${name}</td>` + groups.map(g => { const v = BF.REF[sex + g[0]][k]; return `<td>${v ? Math.round(v[0]) : "—"}</td>`; }).join("") + "</tr>"; });
     $("refTable").innerHTML = h + "</tbody></table>" + '<p class="note">* 근사값</p>';
   }
   $("refSex").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; refSex = b.dataset.v; renderRef(); });
