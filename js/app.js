@@ -176,17 +176,30 @@
     S.garments.push(gm); S.sel = gm.id; renderAll();
   }
   function selectGarment(id) { S.sel = id; renderWorn(); syncCtrl(); renderAvatar(currentValues()); }
-  $("garment").addEventListener("change", e => {
-    [...e.target.files].forEach(f => {
-      const img = new Image(); img.onload = () => {
-        const kind = ["top", "outer", "bottom", "shoes"].includes(S.tab) ? S.tab : "top";
-        const gm = { id: "g" + Date.now() + Math.random().toString(16).slice(2, 5), mine: true, name: f.name.replace(/\.[^.]+$/, ""), kind, src: img, thr: 34, scale: 1, ys: 1, dx: 0, dy: 0 };
-        Object.assign(gm, BF.removeBackground(img, gm.thr)); S.garments.push(gm); S.sel = gm.id; S.tab = "mine";
-        [...$("wtabs").children].forEach(x => x.classList.toggle("on", x.dataset.k === "mine")); renderAll();
-      }; img.src = URL.createObjectURL(f);
-    }); e.target.value = "";
+  const toast = (t, ms = 0) => { let d = $("tvToast"); if (!d.parentElement) { d = document.createElement("div"); d.id = "tvToast"; d.className = "tv-toast"; document.body.appendChild(d); } d.textContent = t; d.hidden = !t; if (ms) setTimeout(() => { d.hidden = true; }, ms); };
+  $("garment").addEventListener("change", async e => {
+    const files = [...e.target.files]; e.target.value = "";
+    for (const f of files) {
+      const img = await new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = URL.createObjectURL(f); });
+      if (!img) continue;
+      const kindTab = ["top", "outer", "bottom", "shoes"].includes(S.tab) ? S.tab : "top";
+      const gm = { id: "g" + Date.now() + Math.random().toString(16).slice(2, 5), mine: true, name: f.name.replace(/\.[^.]+$/, ""), kind: kindTab, src: img, thr: 34, scale: 1, ys: 1, dx: 0, dy: 0 };
+      // Gemini 키가 있으면: 캡처에서 옷만 추출해 상품컷으로 정리 + 종류 자동 판별
+      if (BF.ai.key()) {
+        try {
+          toast("AI가 옷을 읽는 중… (10~20초)");
+          const b64 = await BF.ai.toPng(img.src, 1024);
+          const ex = await BF.ai.extractGarment({ b64, key: BF.ai.key() });
+          const clean = await new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = ex.url; });
+          if (clean) { gm.src = clean; gm.rawSrc = img; if (ex.kind) gm.kind = ex.kind; if (ex.name) gm.name = ex.name; gm.aiClean = true; }
+          toast("");
+        } catch (err) { toast("AI 추출 실패: " + (err.message || err) + " — 원본 그대로 사용", 4000); }
+      }
+      Object.assign(gm, BF.removeBackground(gm.src, gm.thr));
+      S.garments.push(gm); S.sel = gm.id; S.tab = "mine";
+      [...$("wtabs").children].forEach(x => x.classList.toggle("on", x.dataset.k === "mine")); renderAll();
+    }
   });
-
   function fitBadge(gm, values) {
     if (!gm.sizeCm) return "";
     if (gm.kind === "top" || gm.kind === "outer" || gm.kind === "dress") {

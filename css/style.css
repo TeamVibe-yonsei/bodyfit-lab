@@ -410,3 +410,5 @@ h3.mt { margin-top: 18px; }
 .ai-box .prog .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 1s infinite; }
 .ai-box .err { color: var(--warn); font-size: 13px; }
 .ai-box a { color: var(--accent); }
+
+.tv-toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 60; background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 13px; font-weight: 600; box-shadow: var(--shadow); }

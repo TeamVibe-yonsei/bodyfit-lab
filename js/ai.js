@@ -40,6 +40,27 @@ BF.ai = {
     return this.call([{ text: prompt }], key);
   },
 
+  /* 아무 캡처(모델 착용컷·쇼핑몰 화면)에서 옷만 뽑아 상품컷으로 정리 + 종류 판별 */
+  async extractGarment({ b64, key }) {
+    const prompt = `Image 1 is a screenshot or photo that contains a clothing item (it may be worn by a model, or surrounded by app UI, text, prices, other products). Task: isolate the single most prominent clothing item and produce a clean e-commerce product photo of ONLY that garment: laid flat, front view, centered, on a pure white background, same colors/material/details, no person, no mannequin, no UI, no text, no watermark, 3:4 framing. Also reply with one line of JSON: {"kind":"top|outer|bottom|shoes|dress","name":"<short Korean product name, e.g. 카키 MA-1 블루종>"}.`;
+    let lastErr;
+    for (const m of this.MODELS) {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(key)}`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }, { inlineData: { mimeType: "image/png", data: b64 } }] }], generationConfig: { responseModalities: ["IMAGE", "TEXT"] } })
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) { lastErr = new Error(j.error?.message || `HTTP ${r.status}`); if (r.status === 404) continue; throw lastErr; }
+      const ps = j.candidates?.[0]?.content?.parts || [];
+      const im = ps.find(p => p.inlineData || p.inline_data); const txt = ps.filter(p => p.text).map(p => p.text).join(" ");
+      let meta = {}; const mm = txt.match(/\{[^}]*"kind"[^}]*\}/); if (mm) { try { meta = JSON.parse(mm[0]); } catch (e) { } }
+      if (!im) throw new Error("옷을 추출하지 못했습니다");
+      const d = im.inlineData || im.inline_data;
+      return { url: `data:${d.mimeType || d.mime_type || "image/png"};base64,${d.data}`, kind: ["top", "outer", "bottom", "shoes", "dress"].includes(meta.kind) ? meta.kind : null, name: meta.name || null };
+    }
+    throw lastErr || new Error("모델을 사용할 수 없습니다");
+  },
+
   /* 코디 플랫레이: 고른 옷들을 바닥에 펼쳐 놓은 스타일 컷 */
   async flatLay({ garments, key }) {
     const list = garments.map((g, i) => `image ${i + 1}: ${g.kind} — ${g.name}`).join("; ");
