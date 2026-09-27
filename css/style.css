@@ -416,3 +416,9 @@ h3.mt { margin-top: 18px; }
 #s1 { border-top: 0; padding-top: 0; margin-top: 26px; }
 .ref-head { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
 .ref-table th:first-child, .ref-table td:first-child { font-family: var(--sans); font-weight: 600; }
+
+.rlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.rlist li { position: relative; padding: 9px 12px 9px 30px; border-radius: 8px; font-size: 13.5px; line-height: 1.5; }
+.rlist li::before { content: ""; position: absolute; left: 12px; top: 15px; width: 8px; height: 8px; border-radius: 50%; }
+.rlist li.no { background: var(--warn-soft); color: var(--warn); } .rlist li.no::before { background: var(--warn); }
+.rlist li.ok { background: var(--accent-soft); color: var(--accent); } .rlist li.ok::before { background: var(--accent); }

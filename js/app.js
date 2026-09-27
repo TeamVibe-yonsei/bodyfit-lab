@@ -125,9 +125,11 @@
     if (!c) { T.className = "empty"; T.textContent = "치수가 모두 있으면 체형과 추천이 표시됩니다."; R.innerHTML = ""; $("sizes").innerHTML = ""; return null; }
     T.className = "type-card";
     T.innerHTML = `<div><h3>${c.frame}<small>${c.leg} · ${c.stature}</small></h3><p>${c.description}</p></div>`;
+    const josa = (w, a, b) => { const ch = w.trim().replace(/[)\]]+$/, "").slice(-1); const code = ch.charCodeAt(0); const bat = code >= 0xAC00 && code <= 0xD7A3 ? (code - 0xAC00) % 28 : 0; return w + (bat ? a : b); };
+    const sentBad = t => josa(t, "은", "는") + " 피하는 게 좋아요";
+    const sentGood = t => josa(t, "이", "가") + " 잘 어울려요";
     R.innerHTML = c.recommendations.map(r => `<div class="r"><h4>${r.part}</h4><p class="why">${r.why}</p>
-      <div class="lbl">피하기</div><div class="chips no">${r.bad.slice(0, 3).map(b => `<span>${b}</span>`).join("")}</div>
-      <div class="lbl">추천</div><div class="chips">${r.good.slice(0, 3).map(g => `<span>${g}</span>`).join("")}</div></div>`).join("");
+      <ul class="rlist">${r.bad.slice(0, 3).map(b => `<li class="no">${sentBad(b)}</li>`).join("")}${r.good.slice(0, 3).map(g => `<li class="ok">${sentGood(g)}</li>`).join("")}</ul></div>`).join("");
     $("sizes").innerHTML = (c.sizes || []).map(s => `<div class="s"><span>${s.part} 사이즈 가이드</span><b>${s.size}</b></div>`).join("");
     return c;
   }
