@@ -391,3 +391,22 @@ h3.mt { margin-top: 18px; }
 .reveal { animation: reveal .5s ease both; }
 @keyframes reveal { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .reveal { animation: none; } }
+
+/* ── AI 실사 ── */
+.seg-btn.primary-outline { border-color: var(--accent); color: var(--accent); }
+.ai-view { position: absolute; inset: 0; display: grid; place-items: center; }
+.ai-view img { max-width: 100%; max-height: 100%; object-fit: contain; display: none; }
+.ai-view img[src] { display: block; }
+.ai-view .ai-empty { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px; color: var(--muted); font-size: 13.5px; }
+.ai-view img[src] + .ai-empty { display: none; }
+.ai-box { width: min(560px, 100%); display: grid; gap: 12px; }
+.ai-box h3 { margin: 0; font-size: 18px; }
+.ai-box p { margin: 0; font-size: 13px; color: var(--ink-2); line-height: 1.6; }
+.ai-box input[type=password], .ai-box input[type=text] { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); color: var(--ink); font-family: var(--mono); font-size: 13px; }
+.ai-box .opt { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ai-box .opt label { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; cursor: pointer; font-size: 13px; display: flex; gap: 8px; align-items: center; }
+.ai-box .opt label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.ai-box .prog { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ink-2); }
+.ai-box .prog .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 1s infinite; }
+.ai-box .err { color: var(--warn); font-size: 13px; }
+.ai-box a { color: var(--accent); }

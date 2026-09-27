@@ -241,7 +241,8 @@
   window.addEventListener("av3d-ready", () => { BF.av3d.mount($("studio3d")); render3d(currentValues()); });
   if (BF.av3d) { BF.av3d.mount($("studio3d")); }
   $("viewSeg").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; S.view = b.dataset.v; [...$("viewSeg").children].forEach(x => x.classList.toggle("on", x === b));
-    $("studio3d").hidden = S.view !== "3d"; $("hint3d").hidden = S.view !== "3d"; $("avatar").hidden = S.view !== "2d"; $("guideBtn").hidden = S.view !== "2d"; if (BF.av3d?.inst) BF.av3d.inst.resize(); });
+    $("studio3d").hidden = S.view !== "3d"; $("hint3d").hidden = S.view !== "3d"; $("avatar").hidden = S.view !== "2d"; $("guideBtn").hidden = S.view !== "2d"; $("aiView").hidden = S.view !== "ai"; if (BF.av3d?.inst) BF.av3d.inst.resize(); });
+  function setView(v) { const b = [...$("viewSeg").children].find(x => x.dataset.v === v); if (b) b.click(); }
   let gdrag = null;
   const svgPos = e => { const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); };
   svg.addEventListener("pointerdown", e => { const im = e.target.closest("image"); if (!im) return; const gm = S.garments.find(g => g.id === im.dataset.id); S.sel = gm.id; const q = svgPos(e); gdrag = { gm, sx: q.x - gm.dx, sy: q.y - gm.dy }; svg.setPointerCapture(e.pointerId); renderWorn(); syncCtrl(); renderAvatar(currentValues()); e.preventDefault(); });
@@ -263,7 +264,7 @@
     });
   }
   const download = (canvas, name) => { const a = document.createElement("a"); a.download = name; a.href = canvas.toDataURL("image/png"); a.click(); };
-  $("exportAv").addEventListener("click", async () => { if (S.view === "3d" && BF.av3d?.inst) { const a = document.createElement("a"); a.download = "teamvibe_avatar_3d.png"; a.href = BF.av3d.inst.snapshot(1200, 1600); a.click(); return; } const c = await svgToPng(svg, 960, 1260, getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#fff"); download(c, "teamvibe_avatar.png"); });
+  $("exportAv").addEventListener("click", async () => { if (S.view === "ai" && S.aiResult) { const a = document.createElement("a"); a.download = "teamvibe_ai.png"; a.href = S.aiResult; a.click(); return; } if (S.view === "3d" && BF.av3d?.inst) { const a = document.createElement("a"); a.download = "teamvibe_avatar_3d.png"; a.href = BF.av3d.inst.snapshot(1200, 1600); a.click(); return; } const c = await svgToPng(svg, 960, 1260, getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#fff"); download(c, "teamvibe_avatar.png"); });
   $("shareBtn").addEventListener("click", async () => {
     const values = currentValues(); const spec = BF.spectrum(values, group()); const c = BF.classify(spec, values, S.sex);
     const W = 1080, H = 1350; const cv = document.createElement("canvas"); cv.width = W; cv.height = H; const x = cv.getContext("2d");
@@ -290,9 +291,69 @@
     download(cv, "teamvibe_result.png");
   });
 
+  /* ---------- AI 실사 착용 (Gemini) ---------- */
+  let aiModelB64 = null; // 생성한 기본 모델 캐시
+  async function garmentPngs() {
+    const order = S.garments.slice().sort((a, b) => BF.KIND_ORDER[a.kind] - BF.KIND_ORDER[b.kind]);
+    const out = [];
+    for (const g of order) out.push({ name: g.name, kind: BF.KIND_LABEL[g.kind] || g.kind, size: g.size, b64: await BF.ai.toPng(g.mine && g.src ? g.src.src : g.url, 768) });
+    return out;
+  }
+  function openAi() {
+    const modal = document.createElement("div"); modal.className = "modal";
+    const hasKey = !!BF.ai.key();
+    modal.innerHTML = `<div class="box ai-box">
+      <h3>AI 실사 착용</h3>
+      <p>고른 옷을 ${S.photoLoaded ? "내 사진" : "AI 모델"} 위에 실사로 입혀 봅니다. Google Gemini 이미지 모델을 본인 API 키로 직접 호출하며(무료 등급, 하루 수백 장), 사진과 옷 이미지는 생성 요청에만 사용되고 이 사이트의 서버에는 저장되지 않습니다.</p>
+      <div id="aiKeyRow" ${hasKey ? "hidden" : ""}>
+        <p style="margin-bottom:6px"><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>에서 "Create API key"로 만든 키를 붙여 넣으세요. 이 기기의 브라우저에만 저장됩니다.</p>
+        <input type="password" id="aiKey" placeholder="AIza… 로 시작하는 API 키" autocomplete="off">
+      </div>
+      <div class="opt">
+        <label><input type="radio" name="aiBase" value="photo" ${S.photoLoaded ? "checked" : "disabled"}> 내 사진에 입히기${S.photoLoaded ? "" : " (STEP 1 사진 필요)"}</label>
+        <label><input type="radio" name="aiBase" value="model" ${S.photoLoaded ? "" : "checked"}> AI 기본 모델에 입히기</label>
+        <label><input type="radio" name="aiBase" value="flat"> 코디 플랫레이 컷</label>
+      </div>
+      <div class="prog" id="aiProg" hidden><span class="dot"></span><span id="aiProgT">생성 중… 20~40초 걸립니다</span></div>
+      <div class="err" id="aiErr" hidden></div>
+      <div class="row" style="justify-content:space-between">
+        <button class="btn ghost" id="aiKeyReset" ${hasKey ? "" : "hidden"}>키 변경</button>
+        <span style="flex:1"></span>
+        <button class="btn" id="aiCancel">닫기</button><button class="btn primary" id="aiGo">생성</button>
+      </div></div>`;
+    document.body.appendChild(modal);
+    const close = () => modal.remove();
+    modal.querySelector("#aiCancel").onclick = close; modal.addEventListener("click", e => { if (e.target === modal) close(); });
+    modal.querySelector("#aiKeyReset").onclick = () => { modal.querySelector("#aiKeyRow").hidden = false; modal.querySelector("#aiKeyReset").hidden = true; };
+    modal.querySelector("#aiGo").onclick = async () => {
+      const err = modal.querySelector("#aiErr"), prog = modal.querySelector("#aiProg"), go = modal.querySelector("#aiGo"); err.hidden = true;
+      const keyIn = modal.querySelector("#aiKey"); if (keyIn && !modal.querySelector("#aiKeyRow").hidden) { if (!keyIn.value.trim()) { err.textContent = "API 키를 입력해 주세요"; err.hidden = false; return; } BF.ai.setKey(keyIn.value); }
+      const key = BF.ai.key(); if (!key) { err.textContent = "API 키가 없습니다"; err.hidden = false; return; }
+      if (!S.garments.length) { err.textContent = "먼저 옷을 골라 주세요"; err.hidden = false; return; }
+      const base = modal.querySelector("input[name=aiBase]:checked").value;
+      go.disabled = true; prog.hidden = false;
+      try {
+        if (base === "flat") { const gs0 = await garmentPngs(); const url0 = await BF.ai.flatLay({ garments: gs0, key }); $("aiImg").src = url0; S.aiResult = url0; setView("ai"); close(); return; }
+        let personB64;
+        if (base === "photo") { personB64 = await BF.ai.toPng(stage.img.src, 1024); }
+        else {
+          if (!aiModelB64) { modal.querySelector("#aiProgT").textContent = "기본 모델 생성 중… (처음 한 번)"; const url = await BF.ai.makeModel({ sex: S.sex, height: used("height") || 170, frame: S.lastType?.frame, key }); aiModelB64 = url.split(",")[1]; }
+          personB64 = aiModelB64;
+        }
+        modal.querySelector("#aiProgT").textContent = "옷 입히는 중… 20~40초";
+        const gs = await garmentPngs(); const v = currentValues();
+        const sizesNote = `person shoulder width ${v.shoulder ? v.shoulder.toFixed(0) : "?"} cm, height ${v.height || "?"} cm`;
+        const url = await BF.ai.tryOn({ personB64, garments: gs, sizesNote, key });
+        $("aiImg").src = url; S.aiResult = url; setView("ai"); close();
+      } catch (e) { err.textContent = "실패: " + (e.message || e); err.hidden = false; go.disabled = false; prog.hidden = true; }
+    };
+  }
+  $("aiBtn").addEventListener("click", openAi);
+
   /* ---------- 룩북 카드 ---------- */
   const loadImg = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = src; });
   async function avatarSnapshot() {
+    if (S.view === "ai" && S.aiResult) return await loadImg(S.aiResult);
     if (S.view === "3d" && BF.av3d?.inst) return await loadImg(BF.av3d.inst.snapshot(900, 1200));
     const c = await svgToPng(svg, 640, 840, "rgba(0,0,0,0)"); return await loadImg(c.toDataURL("image/png"));
   }
