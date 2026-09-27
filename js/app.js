@@ -275,7 +275,7 @@
     const H = values.height || 170;
     const bodyPx = (A.bottom - A.top) * sc, Sv = values.shoulder || 40;
     const sh = (A.shR - A.shL) * sc, wa = (A.wR - A.wL) * sc;   // 마네킹의 어깨(팔 포함)·허리 폭 (viewBox px)
-    const k = sh / Sv, kLow = bodyPx / H * 1.08;                // 옷 크기는 "내 어깨너비 대비" 비율로 — 마네킹 몸에 맞춰 보이도록
+    const k = sh / Sv, kLow = bodyPx / H;                // 옷 크기는 "내 어깨너비 대비" 비율로 — 마네킹 몸에 맞춰 보이도록
     return { key, url: BF.mannUrl(key), imgW: A.w * sc, imgH: A.h * sc, offX, cx: X((A.shL + A.shR) / 2), shY: Y(A.shY) - bodyPx * 0.035, waistY: Y(A.wY), crotchY: Y(A.crotch), hipY: Y(A.crotch) - bodyPx * 0.05,
       bottom: Y(A.bottom), top: Y(A.top), sh, wa, hip: Math.max(wa * 1.2, sh * 0.9), k, kLow, S: values.shoulder || 40, W: values.waist || 28, L: values.leg || 78, H };
   }
