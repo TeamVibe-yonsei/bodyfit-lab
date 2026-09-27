@@ -475,3 +475,15 @@ h3.mt { margin-top: 18px; }
 
 .spec .rank { border-bottom: 0; padding-bottom: 0; }
 .spec .item:not(:has(.lab)) .bar { margin-top: 12px; }
+
+/* 스펙트럼 라벨 정렬: 항목명·상위/하위·% 같은 줄, 같은 기준선 */
+.spec .top b { display: inline-flex; align-items: baseline; gap: 8px; font-size: 15px; }
+.spec .rank { margin-left: 2px; gap: 4px; align-items: baseline; }
+.spec .rank small { font-size: 15px; font-weight: 600; color: var(--ink-2); }
+.spec .rank b { font-size: 17px; line-height: 1; }
+
+/* 스펙트럼 양끝 라벨: 본문 서체, 은은한 색 */
+.ends { font-family: var(--sans); font-size: 12px; font-weight: 500; letter-spacing: .01em; margin-top: 6px; }
+.ends span:first-child { color: #7FA6F0; }
+.ends span:nth-child(2) { color: var(--muted); }
+.ends span:last-child { color: #F0A070; }
