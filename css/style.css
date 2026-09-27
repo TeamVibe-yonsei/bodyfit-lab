@@ -427,3 +427,17 @@ h3.mt { margin-top: 18px; }
 .ref-table table { width: 100%; }
 .ref-table th, .ref-table td { text-align: right; }
 .ref-table th:first-child, .ref-table td:first-child { text-align: left; }
+
+/* ── 스펙트럼 v3 ── */
+.spec .rank { background: transparent; color: var(--ink); padding: 0; margin-left: 10px; gap: 5px; align-items: baseline; border-bottom: 3px solid var(--c, var(--accent)); border-radius: 0; padding-bottom: 1px; }
+.spec .rank small { font-family: var(--sans); font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .02em; }
+.spec .rank b { font-family: var(--display); font-size: 20px; font-weight: 800; letter-spacing: -.02em; color: var(--c, var(--ink)); }
+.bar { background: linear-gradient(90deg, #4D8DFF 0%, #B8BEC8 50%, #FF8A4D 100%); opacity: .95; box-shadow: none; height: 14px; }
+.bar .pin { background: var(--c, var(--mark)); box-shadow: 0 0 0 1.5px var(--c, var(--mark)), 0 0 18px color-mix(in srgb, var(--c, var(--mark)) 55%, transparent); transition: left .4s cubic-bezier(.2,.8,.2,1), background .4s, box-shadow .4s; }
+.bar .tick { background: rgba(0,0,0,.35); }
+.bar .tick.mean { background: rgba(255,255,255,.7); }
+.ends span:nth-child(2) { color: var(--muted); }
+
+.type-card h3 { font-size: 20px; margin: 0 0 6px; }
+.type-card h3 small { font-size: 14px; margin-left: 8px; }
+.type-card { padding: 16px 18px; }

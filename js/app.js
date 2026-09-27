@@ -94,6 +94,14 @@
 
   /* ---------- 스펙트럼 ---------- */
   let tip = null;
+  // 스펙트럼 위치(0~100) → 색 (왼쪽 파랑 → 가운데 중립 → 오른쪽 주황)
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const hex2 = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+  function posColor(pos) {
+    const lo = hex2("#4D8DFF"), mid = hex2("#B8BEC8"), hi = hex2("#FF8A4D");
+    const t = pos / 100; const [a, b, u] = t < .5 ? [lo, mid, t / .5] : [mid, hi, (t - .5) / .5];
+    return `rgb(${Math.round(lerp(a[0], b[0], u))},${Math.round(lerp(a[1], b[1], u))},${Math.round(lerp(a[2], b[2], u))})`;
+  }
   function renderSpec(spec) {
     const box = $("spec"); box.innerHTML = "";
     if (!spec.length) { box.innerHTML = '<div class="empty">키와 치수가 있으면 스펙트럼이 표시됩니다.</div>'; return; }
@@ -101,16 +109,18 @@
       const it = document.createElement("div"); it.className = "item";
       const unitTxt = p.unit === "%" ? "%" : p.unit ? " " + p.unit : "";
       const vtxt = (p.unit === "" ? p.value.toFixed(p.fixed1 ? 1 : 2) : p.value.toFixed(1)) + unitTxt;
-      const rankCls = p.topPct <= 25 ? "" : p.topPct >= 75 ? "lo" : "mid";
-      const rankTxt = p.topPct <= 50 ? `상위 ${p.topPct.toFixed(0)}%` : `하위 ${p.pct.toFixed(0)}%`;
-      it.innerHTML = `<div class="top"><b>${p.name} <span class="rank ${rankCls}">${rankTxt}</span></b><span class="val"><strong>${vtxt}</strong></span></div>
+      const showVal = ["height", "weight", "bmi"].includes(p.key);
+      const col = posColor(p.pos);
+      const rank = p.topPct <= 50 ? `<small>상위</small><b>${p.topPct.toFixed(0)}%</b>` : `<small>하위</small><b>${p.pct.toFixed(0)}%</b>`;
+      const diff = p.value - p.mean; const diffTxt = p.unit === "" ? diff.toFixed(p.fixed1 ? 1 : 2) : (diff >= 0 ? "+" : "") + diff.toFixed(1) + unitTxt;
+      it.innerHTML = `<div class="top"><b>${p.name} <span class="rank" style="--c:${col}">${rank}</span></b>${showVal ? `<span class="val"><strong>${vtxt}</strong></span>` : ""}</div>
         <div class="bar"><span class="tick" style="left:${100 / 6}%"></span><span class="tick" style="left:${200 / 6}%"></span><span class="tick mean" style="left:50%"></span><span class="tick" style="left:${400 / 6}%"></span><span class="tick" style="left:${500 / 6}%"></span>
-          <span class="lab" style="left:${p.pos}%">${p.z >= 0 ? "평균보다 " + (p.unit === "" ? (p.value - p.mean).toFixed(2) : "+" + (p.value - p.mean).toFixed(1) + unitTxt) : "평균보다 " + (p.unit === "" ? (p.value - p.mean).toFixed(2) : (p.value - p.mean).toFixed(1) + unitTxt)}</span>
-          <span class="pin" style="left:${p.pos}%" tabindex="0" aria-label="${p.name} ${vtxt}, ${rankTxt}"></span></div>
-        <div class="ends"><span>${p.loLabel} ${p.unit === "" ? p.lo.toFixed(2) : p.lo.toFixed(0)}</span><span>또래 평균 ${p.unit === "" ? p.mean.toFixed(2) : p.mean.toFixed(1)}</span><span>${p.unit === "" ? p.hi.toFixed(2) : p.hi.toFixed(0)} ${p.hiLabel}</span></div>`;
+          <span class="lab" style="left:${p.pos}%">평균보다 ${diffTxt}</span>
+          <span class="pin" style="left:${p.pos}%;--c:${col}" tabindex="0" aria-label="${p.name} ${vtxt}"></span></div>
+        <div class="ends"><span>${p.loLabel}</span><span>평균</span><span>${p.hiLabel}</span></div>`;
       const pin = it.querySelector(".pin");
       const show = () => { hide(); tip = document.createElement("div"); tip.className = "tooltip";
-        tip.innerHTML = `<b>${p.name}</b> ${vtxt}<br>또래 평균 ${p.mean.toFixed(p.unit === "" ? 1 : 1)}<br>상위 ${p.topPct.toFixed(1)}% / 하위 ${p.pct.toFixed(1)}%`;
+        tip.innerHTML = `<b>${p.name}</b> ${vtxt}<br>또래 평균 ${p.mean.toFixed(1)}<br>상위 ${p.topPct.toFixed(1)}% / 하위 ${p.pct.toFixed(1)}%`;
         it.appendChild(tip); tip.style.left = p.pos + "%"; tip.style.top = (pin.offsetTop - 4) + "px"; };
       const hide = () => { if (tip) { tip.remove(); tip = null; } };
       pin.addEventListener("mouseenter", show); pin.addEventListener("mouseleave", hide); pin.addEventListener("focus", show); pin.addEventListener("blur", hide);
