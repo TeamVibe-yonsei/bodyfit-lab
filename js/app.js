@@ -421,8 +421,7 @@
     if (!spec.length) { el.textContent = "아직 결과가 없습니다."; el.dataset.text = ""; return; }
     const fmt = p => `${p.unit === "" ? p.value.toFixed(2) : p.value.toFixed(1)}${p.unit === "%" ? "%" : p.unit ? p.unit : ""}`;
     const groups = [];
-    const PM = { ai: "AI 정밀 배치", auto: "자동 배치", manual: "수동 조정", none: "직접 입력" };
-    groups.push({ title: `${BF.REF[group()].label} 기준`, lines: spec.map(p => [p.name, `${fmt(p)}  ·  상위 ${p.topPct.toFixed(1)}%`]).concat(S.photoLoaded ? [["측정 방식", `${PM[S.placeMode] || "자동 배치"} · ${S.est.scaleSource === "card" ? "카드 기준" : "키 기준"}`]] : []) });
+    groups.push({ title: `${BF.REF[group()].label} 기준`, lines: spec.map(p => [p.name, `${fmt(p)}  ·  상위 ${p.topPct.toFixed(1)}%`]) });
     if (c) groups.push({ title: "체형과 추천", lines: [["체형", c.label]].concat(c.recommendations.map(r => [r.part, r.good.slice(0, 2).join(", ")])) });
     if (S.garments.length) groups.push({ title: "착용", lines: [["착용", S.garments.map(g => g.name + (g.size ? " " + g.size : "")).join(", ")]] });
     el.innerHTML = groups.map(g => `<div class="sg"><div class="sg-t">${g.title}</div>${g.lines.map(([k, v]) => `<div class="sl"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("")}</div>`).join("");

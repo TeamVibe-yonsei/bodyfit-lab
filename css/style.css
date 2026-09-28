@@ -162,7 +162,7 @@ table.m td input { width: 86px; padding: 5px 8px; border: 1px solid var(--line);
 .report .sl { display: grid; grid-template-columns: 96px 1fr; gap: 10px; align-items: baseline; }
 .report .sl .k { color: var(--muted); font-weight: 500; }
 .report .sl .v { font-weight: 600; color: var(--ink); }
-.report .sg:first-child .sl .v { font-family: var(--mono); font-weight: 500; }
+.report .sg:first-child .sl .v { font-weight: 600; }
 
 details.ref { margin-top: 14px; font-size: 13px; }
 details.ref summary { cursor: pointer; color: var(--accent); }
