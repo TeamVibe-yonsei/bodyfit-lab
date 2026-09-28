@@ -7,7 +7,7 @@
 <meta name="description" content="사진 한 장으로 내 체형과 옷 핏을 확인하는 웹 서비스">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Noto+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/style.css?v=39">
+<link rel="stylesheet" href="css/style.css?v=40">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236D95F2'/%3E%3Cpath d='M8 10l8 13 8-13M12 6.5c1.3 1 2.7 1 4 0s2.7-1 4 0' fill='none' stroke='%230F1524' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 </head>
 <body>
@@ -23,7 +23,7 @@
 </header>
 
 <section class="guide" id="guide">
-  <div class="pose-ex"><figure><img src="img/pose-basic.jpg" alt="기본 촬영 자세 예시"><figcaption>기본 자세</figcaption></figure><figure><img src="img/pose-card.jpg?v=39" alt="카드 정밀 측정 자세 예시"><figcaption>카드 정밀 측정</figcaption></figure></div>
+  <div class="pose-ex"><figure><img src="img/pose-basic.jpg" alt="기본 촬영 자세 예시"><figcaption>기본 자세</figcaption></figure><figure><img src="img/pose-card.jpg?v=40" alt="카드 정밀 측정 자세 예시"><figcaption>카드 정밀 측정</figcaption></figure></div>
   <div class="guide-text">
     <h2>타이트한 옷을 입은 사진이 좋아요</h2>
     <ul class="tips">
@@ -49,8 +49,8 @@
       <details class="how"><summary>무료 키 받는 방법</summary>
         <ol>
           <li>구글 계정으로 로그인한 뒤 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> 로 갑니다.</li>
-          <li>오른쪽 위 <b>"API 키 만들기(Create API key)"</b>를 누르고, 프로젝트를 고르라고 하면 <b>"새 프로젝트에서 만들기"</b>를 선택합니다.</li>
-          <li>화면에 뜨는 긴 문자열(<b>AIza…</b> 또는 <b>AQ.…</b>로 시작)을 "키 복사"로 <b>복사</b>해서 아래 칸에 붙여 넣고 "연결"을 누릅니다.</li>
+          <li>오른쪽 위 <b>API 키 만들기(Create API key)</b>를 누르고, 프로젝트를 고르라고 하면 <b>새 프로젝트에서 만들기</b>를 선택합니다.</li>
+          <li>화면에 뜨는 긴 문자열(<b>AIza…</b> 또는 <b>AQ.…</b>로 시작)을 키 복사로 <b>복사</b>해서 아래 칸에 붙여 넣고 연결을 누릅니다.</li>
         </ol>
         <p class="tip">키는 비밀번호처럼 다루세요. 다른 사람에게 보내지 마세요.</p>
       </details>
@@ -122,7 +122,7 @@
       <div class="ai-gate" id="aiGate">
         <div class="gate-box small">
           <h3>Gemini API 키가 필요합니다</h3>
-          <p>피팅룸은 고른 옷을 내 체형 마네킹에 실사로 입혀 보여 줍니다. STEP 1 맨 위 "AI 연결"에서 키를 넣어 주세요.</p>
+          <p>피팅룸은 고른 옷을 내 체형 마네킹에 실사로 입혀 보여 줍니다. STEP 1 맨 위 AI 연결에서 키를 넣어 주세요.</p>
           <button class="btn primary" id="gateJump">STEP 1로 이동</button>
         </div>
       </div>
@@ -158,17 +158,17 @@
 </main>
 
 <footer><div class="wrap">
-  <p>Team Vibe · 연세대학교 학생자율연구 · 데이터: 국가기술표준원 제8차 한국인 인체치수조사 · 포즈 추정: Google MediaPipe · <span id="ver">v39</span></p>
+  <p>Team Vibe · 연세대학교 학생자율연구 · 데이터: 국가기술표준원 제8차 한국인 인체치수조사 · 포즈 추정: Google MediaPipe · <span id="ver">v40</span></p>
 </div></footer>
 
-<script src="vendor/pose/pose.js?v=39"></script>
-<script src="js/reference.js?v=39"></script>
-<script src="js/classify.js?v=39"></script>
-<script src="js/measure.js?v=39"></script>
-<script src="js/avatar.js?v=39"></script>
-<script src="js/mannequin.js?v=39"></script>
-<script src="js/garments.js?v=39"></script>
-<script src="js/ai.js?v=39"></script>
-<script src="js/app.js?v=39"></script>
+<script src="vendor/pose/pose.js?v=40"></script>
+<script src="js/reference.js?v=40"></script>
+<script src="js/classify.js?v=40"></script>
+<script src="js/measure.js?v=40"></script>
+<script src="js/avatar.js?v=40"></script>
+<script src="js/mannequin.js?v=40"></script>
+<script src="js/garments.js?v=40"></script>
+<script src="js/ai.js?v=40"></script>
+<script src="js/app.js?v=40"></script>
 </body>
 </html>
