@@ -129,7 +129,7 @@ table.m td input { width: 86px; padding: 5px 8px; border: 1px solid var(--line);
 .sizes .s b { display: block; font-family: var(--display); font-size: 22px; letter-spacing: -.02em; }
 .sizes .s b em { font-style: normal; font-family: var(--sans); font-size: 13px; color: var(--muted); font-weight: 600; letter-spacing: 0; }
 .sizes .s small { display: block; font-size: 11.5px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
-.sizes .s small.tip { color: var(--ink-2); font-size: 12.5px; margin-top: 6px; }
+.sizes .s small.tip { color: var(--warn); font-size: 12.5px; margin-top: 6px; }
 .sizes .s span { font-size: 11.5px; color: var(--muted); display: block; }
 .sizes .s em { font-style: normal; font-family: var(--mono); font-size: 11px; color: var(--ink-2); }
 
