@@ -31,10 +31,10 @@ BF.ai = {
   _dead: {},
   friendly(msg, status) {
     const m = msg || "";
-    if (/limit:\s*0/.test(m)) return "이 키의 무료 등급에서는 이미지 생성 모델을 쓸 수 없습니다. Google AI Studio에서 결제(종량제)를 설정하면 바로 사용됩니다 (이미지 1장당 약 50원).";
-    if (status === 429 || /quota|rate/i.test(m)) { const w = m.match(/retry in (\d+)/i); return `요청이 몰렸습니다. ${w ? Math.ceil(w[1]) + "초" : "잠시"} 후 다시 시도해 주세요.`; }
-    if (/api key not valid|invalid api key|api_key_invalid/i.test(m)) return "API 키가 올바르지 않습니다. STEP 1에서 키를 다시 넣어 주세요.";
-    if (/permission|forbidden/i.test(m) || status === 403) return "이 키로는 해당 모델에 접근할 수 없습니다.";
+    if (/limit:\s*0/.test(m)) return "이 키의 무료 등급에서는 이미지 생성 모델을 쓸 수 없습니다 Google AI Studio에서 결제(종량제)를 설정하면 바로 사용됩니다 (이미지 1장당 약 50원)";
+    if (status === 429 || /quota|rate/i.test(m)) { const w = m.match(/retry in (\d+)/i); return `요청이 몰렸습니다 ${w ? Math.ceil(w[1]) + "초" : "잠시"} 후 다시 시도해 주세요`; }
+    if (/api key not valid|invalid api key|api_key_invalid/i.test(m)) return "API 키가 올바르지 않습니다 STEP 1에서 키를 다시 넣어 주세요";
+    if (/permission|forbidden/i.test(m) || status === 403) return "이 키로는 해당 모델에 접근할 수 없습니다";
     return m.length > 160 ? m.slice(0, 160) + "…" : m;
   },
   async generate(kind, body, key) {
@@ -75,13 +75,13 @@ BF.ai = {
   /* 기준점 좌표 찍기(pointing): 사진에서 7개 몸 기준점(+카드 긴 변 양 끝)을 0~1000 정규 좌표로 받음 */
   async locatePoints({ b64, useCard, key }) {
     const prompt = `You are a precise anthropometric landmark annotator. The image shows one person standing upright, facing the camera, full body visible. Locate these landmarks as accurately as possible, on the person's body outline (not on clothing folds or background):
-- head: the topmost point of the head (include hair).
-- heel: the lowest point where the feet touch the floor (midpoint between the two feet).
+- head: the topmost point of the head (include hair)
+- heel: the lowest point where the feet touch the floor (midpoint between the two feet)
 - shL: the LEFT shoulder in the image (viewer's left) — the outermost bony point of the shoulder (acromion), where the shoulder line meets the upper arm.
 - shR: the same point on the viewer's RIGHT shoulder.
-- wL / wR: the left and right edges of the torso silhouette at the NARROWEST part of the waist (between the ribs and the hip bones). Both at the same height.
+- wL / wR: the left and right edges of the torso silhouette at the NARROWEST part of the waist (between the ribs and the hip bones) Both at the same height.
 - crotch: the point where the two legs meet (inseam top).${useCard ? `
-- cardA / cardB: the two ends of the LONG edge of the credit-card-sized card the person is holding (the two corners of the longer side that is most visible).` : ""}
+- cardA / cardB: the two ends of the LONG edge of the credit-card-sized card the person is holding (the two corners of the longer side that is most visible)` : ""}
 Answer ONLY with JSON: {"head":[y,x],"heel":[y,x],"shL":[y,x],"shR":[y,x],"wL":[y,x],"wR":[y,x],"crotch":[y,x]${useCard ? `,"cardA":[y,x],"cardB":[y,x]` : ""}} where y and x are integers 0-1000 normalized to the image height and width.`;
     const j = await this.generate("text", { contents: [{ role: "user", parts: [{ text: prompt }, { inlineData: { mimeType: "image/png", data: b64 } }] }], generationConfig: { responseMimeType: "application/json", temperature: 0 } }, key);
     const txt = (j.candidates?.[0]?.content?.parts || []).filter(p => p.text).map(p => p.text).join("");
@@ -101,7 +101,7 @@ Answer ONLY with JSON: {"head":[y,x],"heel":[y,x],"shL":[y,x],"shR":[y,x],"wL":[
 
   /* 아무 캡처(모델 착용컷·쇼핑몰 화면)에서 옷만 뽑아 상품컷으로 정리 + 종류 판별 */
   async extractGarment({ b64, key }) {
-    const prompt = `Image 1 is a screenshot or photo that contains a clothing item (it may be worn by a model, or surrounded by app UI, text, prices, other products). Task: isolate the single most prominent clothing item and produce a clean e-commerce product photo of ONLY that garment: laid flat, front view, centered, on a pure white background, same colors/material/details, no person, no mannequin, no UI, no text, no watermark, 3:4 framing. Also reply with one line of JSON: {"kind":"top|outer|bottom|shoes|dress","name":"<short Korean product name, e.g. 카키 MA-1 블루종>"}.`;
+    const prompt = `Image 1 is a screenshot or photo that contains a clothing item (it may be worn by a model, or surrounded by app UI, text, prices, other products) Task: isolate the single most prominent clothing item and produce a clean e-commerce product photo of ONLY that garment: laid flat, front view, centered, on a pure white background, same colors/material/details, no person, no mannequin, no UI, no text, no watermark, 3:4 framing. Also reply with one line of JSON: {"kind":"top|outer|bottom|shoes|dress","name":"<short Korean product name, e.g. 카키 MA-1 블루종>"}.`;
     const j = await this.generate("image", { contents: [{ role: "user", parts: [{ text: prompt }, { inlineData: { mimeType: "image/png", data: b64 } }] }], generationConfig: { responseModalities: ["IMAGE", "TEXT"] } }, key);
     const ps = j.candidates?.[0]?.content?.parts || [];
     const im = ps.find(p => p.inlineData || p.inline_data); const txt = ps.filter(p => p.text).map(p => p.text).join(" ");
@@ -114,7 +114,7 @@ Answer ONLY with JSON: {"head":[y,x],"heel":[y,x],"shL":[y,x],"shR":[y,x],"wL":[
   /* 코디 플랫레이: 고른 옷들을 바닥에 펼쳐 놓은 스타일 컷 */
   async flatLay({ garments, key }) {
     const list = garments.map((g, i) => `image ${i + 1}: ${g.kind} — ${g.name}`).join("; ");
-    const prompt = `Create a top-down "flat lay" outfit photo using exactly these clothing items (${list}). Arrange them neatly on a dark grey concrete floor as a complete outfit: top/outer at the top with sleeves naturally folded, pants below, shoes at the bottom, small accessories beside. Keep each item's real colors, patterns, logos and shapes faithful to the reference images. Soft natural lighting, subtle shadows, editorial fashion-magazine styling, 3:4 portrait framing. No people, no text, no watermark.`;
+    const prompt = `Create a top-down "flat lay" outfit photo using exactly these clothing items (${list}) Arrange them neatly on a dark grey concrete floor as a complete outfit: top/outer at the top with sleeves naturally folded, pants below, shoes at the bottom, small accessories beside. Keep each item's real colors, patterns, logos and shapes faithful to the reference images. Soft natural lighting, subtle shadows, editorial fashion-magazine styling, 3:4 portrait framing. No people, no text, no watermark.`;
     const parts = [{ text: prompt }]; garments.forEach(g => parts.push({ inlineData: { mimeType: "image/png", data: g.b64 } }));
     return this.call(parts, key);
   },
@@ -122,7 +122,7 @@ Answer ONLY with JSON: {"head":[y,x],"heel":[y,x],"shL":[y,x],"shR":[y,x],"wL":[
   /* 가상 착용: person(base64 png) + garments[{name, kind, size, b64}] */
   async tryOn({ personB64, garments, sizesNote, key }) {
     const list = garments.map((g, i) => `image ${i + 2}: ${g.kind} — ${g.name}${g.size ? ` (size ${g.size})` : ""}`).join("; ");
-    const prompt = `Virtual try-on. Image 1 is the person. Dress this exact person in the clothing items shown in the following images (${list}). Keep the person's face, hair, skin, body proportions, pose, camera angle and background exactly the same. Replace only the clothing. Render the garments with realistic fabric, drape, shadows and correct fit${sizesNote ? ` (${sizesNote})` : ""}. Layer order: shoes, bottom, top, outer. Output one photorealistic full-body image, same framing as image 1. No text, no watermark.`;
+    const prompt = `Virtual try-on. Image 1 is the person. Dress this exact person in the clothing items shown in the following images (${list}) Keep the person's face, hair, skin, body proportions, pose, camera angle and background exactly the same. Replace only the clothing. Render the garments with realistic fabric, drape, shadows and correct fit${sizesNote ? ` (${sizesNote})` : ""}. Layer order: shoes, bottom, top, outer. Output one photorealistic full-body image, same framing as image 1. No text, no watermark.`;
     const parts = [{ text: prompt }, { inlineData: { mimeType: "image/png", data: personB64 } }];
     garments.forEach(g => parts.push({ inlineData: { mimeType: "image/png", data: g.b64 } }));
     return this.call(parts, key);

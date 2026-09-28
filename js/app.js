@@ -29,7 +29,7 @@
     img.onload = () => {
       stage.setImage(img); S.photoLoaded = true; S.sample = false; $("placeholder").hidden = true; $("diagBtn").disabled = false; autoDetect();
     };
-    img.onerror = () => setStatus("이미지를 열 수 없습니다. JPG/PNG 파일인지 확인하세요.", "err");
+    img.onerror = () => setStatus("이미지를 열 수 없습니다 JPG/PNG 파일인지 확인하세요", "err");
     img.src = src;
   }
   $("cardToggle").addEventListener("change", e => {
@@ -67,7 +67,7 @@
       if (P.shL.x > P.shR.x) [P.shL, P.shR] = [P.shR, P.shL]; if (P.wL.x > P.wR.x) [P.wL, P.wR] = [P.wR, P.wL];
       if (stage.useCard && pts.cardA && pts.cardB) { P.cA = { x: pts.cardA.x * W, y: pts.cardA.y * H }; P.cB = { x: pts.cardB.x * W, y: pts.cardB.y * H }; }
       stage.setPoints(P); if (P.cA) { stage.pts.cA = P.cA; stage.pts.cB = P.cB; stage.draw(); }
-      S.placeMode = "ai"; setStatus("AI가 기준점을 놓았습니다. 어긋난 점이 있으면 드래그로 고쳐 주세요", "ok"); update();
+      S.placeMode = "ai"; setStatus("AI가 기준점을 놓았습니다 어긋난 점이 있으면 드래그로 고쳐 주세요", "ok"); update();
     } catch (err) { setStatus("AI 배치 실패: " + (err.message || err) + " — 자동 배치 값을 사용합니다", "err"); }
     finally { aiPlacing = false; $("aiPlaceBtn").disabled = false; }
   }
@@ -133,7 +133,7 @@
   }
   function renderSpec(spec) {
     const box = $("spec"); box.innerHTML = "";
-    if (!spec.length) { box.innerHTML = '<div class="empty">키와 치수가 있으면 스펙트럼이 표시됩니다.</div>'; return; }
+    if (!spec.length) { box.innerHTML = '<div class="empty">키와 치수가 있으면 스펙트럼이 표시됩니다</div>'; return; }
     spec.forEach(p => {
       const it = document.createElement("div"); it.className = "item";
       const unitTxt = p.unit === "%" ? "%" : p.unit ? " " + p.unit : "";
@@ -163,7 +163,7 @@
   const ICON = { top: "T", bottom: "B", outer: "O" };
   function renderType(spec, values) {
     const c = BF.classify(spec, values, S.sex); const T = $("typeCard"), R = $("reco");
-    if (!c) { T.className = "empty"; T.textContent = "치수가 모두 있으면 체형과 추천이 표시됩니다."; R.innerHTML = ""; $("sizes").innerHTML = ""; return null; }
+    if (!c) { T.className = "empty"; T.textContent = "치수가 모두 있으면 체형과 추천이 표시됩니다"; R.innerHTML = ""; $("sizes").innerHTML = ""; return null; }
     T.className = "type-card";
     T.innerHTML = `<div><h3>${c.frame}<small>${c.leg} · ${c.stature}</small></h3><p>${c.description}</p></div>`;
     const josa = (w, a, b) => { const ch = w.trim().replace(/[)\]]+$/, "").slice(-1); const code = ch.charCodeAt(0); const bat = code >= 0xAC00 && code <= 0xD7A3 ? (code - 0xAC00) % 28 : 0; return w + (bat ? a : b); };
@@ -197,9 +197,9 @@
     if (S.tab === "reco") {
       const m = S.lastType ? BF.recoMatch(S.lastType.recommendations, BF.CATALOG.concat(S.garments.filter(x => x.mine))) : [];
       items = m.map(o => o.item); m.forEach(o => { why[o.item.id] = o.phrase; });
-      if (!items.length) g.innerHTML = '<div class="fr-empty" style="flex:1">STEP 1에서 진단하면 체형에 어울리는 옷이 여기에 모입니다.</div>';
+      if (!items.length) g.innerHTML = '<div class="fr-empty" style="flex:1">STEP 1에서 진단하면 체형에 어울리는 옷이 여기에 모입니다</div>';
     } else items = S.tab === "mine" ? S.garments.filter(x => x.mine) : BF.CATALOG.filter(c => c.kind === S.tab);
-    if (S.tab === "mine" && !items.length) { g.innerHTML = '<div class="fr-empty" style="flex:1">오른쪽 "내 옷 사진 추가"로 상품 컷을 올리면 여기에 보관됩니다.</div>'; }
+    if (S.tab === "mine" && !items.length) { g.innerHTML = '<div class="fr-empty" style="flex:1">오른쪽 "내 옷 사진 추가"로 상품 컷을 올리면 여기에 보관됩니다</div>'; }
     items.forEach(it => {
       const worn = S.garments.some(x => x.catId === it.id || x.id === it.id);
       const el = document.createElement("div"); el.className = "pcard" + (worn ? " on" : "") + (why[it.id] ? " rec" : "");
@@ -374,7 +374,7 @@
   async function avatarSnapshot() { return await loadImg(S.aiResult || mannUrl()); }
   const rr = (x, X, y, w, h, r) => { x.beginPath(); x.roundRect(X, y, w, h, r); };
   async function makeLookbook() {
-    if (!S.garments.length) { alert("먼저 옷을 골라 주세요."); return; }
+    if (!S.garments.length) { alert("먼저 옷을 골라 주세요"); return; }
     const W = 1080, H = 1350; const cv = document.createElement("canvas"); cv.width = W; cv.height = H; const x = cv.getContext("2d");
     x.fillStyle = "#F4F1EC"; x.fillRect(0, 0, W, H);
     // 헤더
@@ -418,7 +418,7 @@
   /* ---------- 요약 ---------- */
   function renderSummary(spec, c) {
     const el = $("summary");
-    if (!spec.length) { el.textContent = "아직 결과가 없습니다."; el.dataset.text = ""; return; }
+    if (!spec.length) { el.textContent = "아직 결과가 없습니다"; el.dataset.text = ""; return; }
     const fmt = p => `${p.unit === "" ? p.value.toFixed(2) : p.value.toFixed(1)}${p.unit === "%" ? "%" : p.unit ? p.unit : ""}`;
     const groups = [];
     groups.push({ title: `${BF.REF[group()].label} 기준`, lines: spec.map(p => [p.name, `${fmt(p)}  ·  상위 ${p.topPct.toFixed(1)}%`]) });
