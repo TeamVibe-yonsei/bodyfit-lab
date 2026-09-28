@@ -8,7 +8,7 @@
   /* ---------- 저장/복원 ---------- */
   const LS = "bodyfit.v4";
   const save = () => { try { localStorage.setItem(LS, JSON.stringify({ sex: S.sex, ageIn: $("ageIn").value, height: $("height").value, weight: $("weight").value, chestIn: $("chestIn").value, waistCIn: $("waistCIn").value, manual: S.manual, guides: S.guides })); } catch (e) { } };
-  const load = () => { try { const d = JSON.parse(localStorage.getItem(LS) || "null"); if (!d) return; S.sex = d.sex || "M"; S.manual = d.manual || {}; S.guides = d.guides ?? true; if (d.ageIn) $("ageIn").value = d.ageIn; if (d.height) $("height").value = d.height; if (d.weight) $("weight").value = d.weight; if (d.chestIn) $("chestIn").value = d.chestIn; if (d.waistCIn) $("waistCIn").value = d.waistCIn; } catch (e) { } };
+  const load = () => { try { const d = JSON.parse(localStorage.getItem(LS) || "null"); if (!d) return; S.sex = d.sex || "M"; S.manual = d.manual || {}; S.guides = d.guides ?? true; if (d.ageIn) $("ageIn").value = d.ageIn; if (d.height) $("height").value = d.height; if (d.weight) $("weight").value = d.weight; if (d.chestIn) $("chestIn").value = d.chestIn; if (d.waistCIn) $("waistCIn").value = d.waistCIn; if (d.chestIn || d.waistCIn) $("moreIn").open = true; } catch (e) { } };
 
   /* ---------- 테마 ---------- */
 
