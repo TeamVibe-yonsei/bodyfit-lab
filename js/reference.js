@@ -46,9 +46,9 @@ BF.REF = {
 BF.KEYS = [
   { k: "shoulder", name: "어깨너비", unit: "cm", lo: "좁음", hi: "넓음", desc: "양 어깨점(어깨사이너비) 직선거리" },
   { k: "waist", invert: true,    name: "허리너비", unit: "cm", lo: "가늘음", hi: "넓음", desc: "정면에서 본 허리 최소 폭" },
-  { k: "leg",      name: "다리길이", unit: "cm", lo: "짧음", hi: "김", desc: "샅높이(샅점~바닥)" },
+  { k: "leg",      name: "다리길이", unit: "cm", lo: "짧음", hi: "김", desc: "가랑이~바닥" },
   { k: "swr",      name: "어깨/허리 비",  unit: "", lo: "허리 우세", hi: "어깨 우세", desc: "어깨너비 ÷ 허리너비", derived: true },
-  { k: "legRatio", name: "다리 비율", unit: "%", lo: "상체 김", hi: "다리 김", desc: "샅높이 ÷ 키", derived: true },
+  { k: "legRatio", name: "다리 비율", unit: "%", lo: "상체 김", hi: "다리 김", desc: "다리길이 ÷ 키", derived: true },
   { k: "height",   name: "키",       unit: "cm", lo: "작음", hi: "큼", desc: "머리끝~바닥" },
   { k: "weight",   name: "몸무게",   unit: "kg", lo: "가벼움", hi: "무거움", desc: "", optional: true },
   { k: "bmi",      name: "BMI",      unit: "", lo: "마름", hi: "비만", desc: "몸무게 ÷ 키²", optional: true, fixed1: true }

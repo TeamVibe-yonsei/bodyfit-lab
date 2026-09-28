@@ -8,7 +8,7 @@ BF.POINTS = [
   { k: "shR",    n: 4, label: "오른쪽 어깨점", tip: "화면 기준 오른쪽 어깨의 바깥 뼈점" },
   { k: "wL",     n: 5, label: "허리 왼쪽 끝", tip: "허리가 가장 잘록한 높이의 왼쪽 윤곽" },
   { k: "wR",     n: 6, label: "허리 오른쪽 끝", tip: "같은 높이의 오른쪽 윤곽" },
-  { k: "crotch", n: 7, label: "샅(가랑이)",  tip: "두 다리가 갈라지는 지점" }
+  { k: "crotch", n: 7, label: "가랑이",  tip: "두 다리가 갈라지는 지점" }
 ];
 BF.CARD_MM = 85.6; // ISO/IEC 7810 ID-1 (신용·체크·교통카드, 주민등록증, 운전면허증, 대부분의 학생증) 긴 변
 BF.CARD_POINTS = [{ k: "cA", n: "A", label: "카드 긴 변 한쪽 끝" }, { k: "cB", n: "B", label: "카드 긴 변 반대쪽 끝" }];
