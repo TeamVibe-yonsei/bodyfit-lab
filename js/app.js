@@ -139,18 +139,20 @@
       const unitTxt = p.unit === "%" ? "%" : p.unit ? " " + p.unit : "";
       const vtxt = (p.unit === "" ? p.value.toFixed(p.fixed1 ? 1 : 2) : p.value.toFixed(1)) + unitTxt;
       const showVal = ["height", "weight", "bmi"].includes(p.key);
-      const col = posColor(p.pos);
+      // 막대는 항상 오른쪽 = 상위(우세): 허리너비처럼 작을수록 상위인 항목은 좌우를 뒤집어 표시
+      const pos = p.invert ? 100 - p.pos : p.pos, loL = p.invert ? p.hiLabel : p.loLabel, hiL = p.invert ? p.loLabel : p.hiLabel;
+      const col = posColor(pos);
       const rank = p.topPct <= 50 ? `<small>상위</small><b>${p.topPct.toFixed(0)}%</b>` : `<small>하위</small><b>${p.pct.toFixed(0)}%</b>`;
       const diff = p.value - p.mean; const diffTxt = p.unit === "" ? diff.toFixed(p.fixed1 ? 1 : 2) : (diff >= 0 ? "+" : "") + diff.toFixed(1) + unitTxt;
       it.innerHTML = `<div class="top"><b>${p.name}${showVal ? ` <span class="val"><strong>${vtxt}</strong></span>` : ""}</b><span class="rank">${rank}</span></div>
         <div class="bar"><span class="tick" style="left:${100 / 6}%"></span><span class="tick" style="left:${200 / 6}%"></span><span class="tick mean" style="left:50%"></span><span class="tick" style="left:${400 / 6}%"></span><span class="tick" style="left:${500 / 6}%"></span>
-          ${showVal ? `<span class="lab" style="left:${p.pos}%">평균보다 ${diffTxt}</span>` : ""}
-          <span class="pin" style="left:${p.pos}%;--c:${col}" tabindex="0" aria-label="${p.name} ${vtxt}"></span></div>
-        <div class="ends"><span>${p.loLabel}</span><span>평균</span><span>${p.hiLabel}</span></div>`;
+          ${showVal ? `<span class="lab" style="left:${pos}%">평균보다 ${diffTxt}</span>` : ""}
+          <span class="pin" style="left:${pos}%;--c:${col}" tabindex="0" aria-label="${p.name} ${vtxt}"></span></div>
+        <div class="ends"><span>${loL}</span><span>평균</span><span>${hiL}</span></div>`;
       const pin = it.querySelector(".pin");
       const show = () => { hide(); tip = document.createElement("div"); tip.className = "tooltip";
         tip.innerHTML = `<b>${p.name}</b> ${vtxt}<br>또래 평균 ${p.mean.toFixed(1)}<br>상위 ${p.topPct.toFixed(1)}% / 하위 ${p.pct.toFixed(1)}%`;
-        it.appendChild(tip); tip.style.left = p.pos + "%"; tip.style.top = (pin.offsetTop - 4) + "px"; };
+        it.appendChild(tip); tip.style.left = pos + "%"; tip.style.top = (pin.offsetTop - 4) + "px"; };
       const hide = () => { if (tip) { tip.remove(); tip = null; } };
       pin.addEventListener("mouseenter", show); pin.addEventListener("mouseleave", hide); pin.addEventListener("focus", show); pin.addEventListener("blur", hide);
       box.appendChild(it);
@@ -312,7 +314,7 @@
       const grad = x.createLinearGradient(bx, 0, bx + bw, 0); grad.addColorStop(0, "#BFD4F2"); grad.addColorStop(.5, "#E9ECEF"); grad.addColorStop(1, "#F2CDBA");
       x.fillStyle = grad; x.beginPath(); x.roundRect(bx, by, bw, 16, 8); x.fill();
       x.fillStyle = "#6B7480"; x.fillRect(bx + bw / 2 - 1, by - 4, 2, 24);
-      x.fillStyle = "#E0653B"; x.beginPath(); x.arc(bx + bw * p.pos / 100, by + 8, 13, 0, Math.PI * 2); x.fill(); x.strokeStyle = "#fff"; x.lineWidth = 3; x.stroke();
+      x.fillStyle = "#E0653B"; x.beginPath(); x.arc(bx + bw * (p.invert ? 100 - p.pos : p.pos) / 100, by + 8, 13, 0, Math.PI * 2); x.fill(); x.strokeStyle = "#fff"; x.lineWidth = 3; x.stroke();
       y += 82;
     });
     if (c) { y += 10; x.fillStyle = "#16191F"; x.font = "600 22px 'Noto Sans KR', sans-serif"; x.fillText("추천 스타일", 60, y); y += 34; x.font = "400 19px 'Noto Sans KR', sans-serif";
