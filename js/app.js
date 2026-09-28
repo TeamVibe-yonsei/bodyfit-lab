@@ -171,7 +171,7 @@
     const sentGood = t => josa(t, "이", "가") + " 잘 어울려요";
     R.innerHTML = c.recommendations.map(r => `<div class="r"><h4>${r.part}</h4><p class="why">${r.why}</p>
       <ul class="rlist">${r.bad.slice(0, 3).map(b => `<li class="no">${sentBad(b)}</li>`).join("")}${r.good.slice(0, 3).map(g => `<li class="ok">${sentGood(g)}</li>`).join("")}</ul></div>`).join("");
-    $("sizes").innerHTML = (c.sizes || []).map(s => `<div class="s"><span>${s.part} 사이즈</span><b>${s.size}${s.tag ? ` <em>(${s.tag})</em>` : ""}</b>${s.note ? `<small class="warn">${s.note}</small>` : ""}<small class="basis" ${S.showBasis ? "" : "hidden"}>${s.basis}</small></div>`).join("") + (c.sizes ? `<button class="btn ghost basis-btn" id="basisBtn">${S.showBasis ? "추정치 숨기기" : "추정치 보기"}</button>` : "");
+    $("sizes").innerHTML = (c.sizes || []).map(s => `<div class="s"><span>${s.part} 사이즈</span><b>${s.size}${s.tag ? ` <em>(${s.tag})</em>` : ""}</b>${s.note ? `<small class="tip">${s.note}</small>` : ""}<small class="basis" ${S.showBasis ? "" : "hidden"}>${s.basis}</small></div>`).join("") + (c.sizes ? `<button class="btn ghost basis-btn" id="basisBtn">${S.showBasis ? "추정치 숨기기" : "추정치 보기"}</button>` : "");
     const bb = $("basisBtn"); if (bb) bb.addEventListener("click", () => { S.showBasis = !S.showBasis; update(false); });
     return c;
   }
