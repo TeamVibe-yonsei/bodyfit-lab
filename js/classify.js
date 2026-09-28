@@ -20,8 +20,10 @@ BF.spectrum = function (values, groupKey) {
     const pos = Math.max(1.5, Math.min(98.5, (val - lo) / (hi - lo) * 100));
     const cdf = BF.normCdf(z);
     out.push({ key: K.k, name: K.name, unit: K.unit, desc: K.desc, value: val, mean: m, sd, z, pos,
-      lo, hi, loLabel: K.lo, hiLabel: K.hi, topPct: Math.max(0.1, Math.min(99.9, (1 - cdf) * 100)),
-      pct: Math.max(0.1, Math.min(99.9, cdf * 100)), derived: !!K.derived });
+      lo, hi, loLabel: K.lo, hiLabel: K.hi, invert: !!K.invert,
+      // 상위 % : 기본은 값이 클수록 상위, invert(허리너비)는 가늘수록 상위
+      topPct: Math.max(0.1, Math.min(99.9, (K.invert ? cdf : 1 - cdf) * 100)),
+      pct: Math.max(0.1, Math.min(99.9, (K.invert ? 1 - cdf : cdf) * 100)), derived: !!K.derived });
   });
   return out;
 };

@@ -45,7 +45,7 @@ BF.REF = {
 /* 스펙트럼에 표시할 항목 */
 BF.KEYS = [
   { k: "shoulder", name: "어깨너비", unit: "cm", lo: "좁음", hi: "넓음", desc: "양 어깨점(어깨사이너비) 직선거리" },
-  { k: "waist",    name: "허리너비", unit: "cm", lo: "가늘음", hi: "넓음", desc: "정면에서 본 허리 최소 폭" },
+  { k: "waist", invert: true,    name: "허리너비", unit: "cm", lo: "가늘음", hi: "넓음", desc: "정면에서 본 허리 최소 폭" },
   { k: "leg",      name: "다리길이", unit: "cm", lo: "짧음", hi: "김", desc: "샅높이(샅점~바닥)" },
   { k: "swr",      name: "어깨/허리 비",  unit: "", lo: "허리 우세", hi: "어깨 우세", desc: "어깨너비 ÷ 허리너비", derived: true },
   { k: "legRatio", name: "다리 비율", unit: "%", lo: "상체 김", hi: "다리 김", desc: "샅높이 ÷ 키", derived: true },
