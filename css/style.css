@@ -541,7 +541,4 @@ h3.mt { margin-top: 18px; }
 .pcard .pm .ok { color: var(--accent); font-weight: 600; white-space: normal; display: block; line-height: 1.35; }
 .pcard.rec { flex-basis: 170px; }
 details.more { margin-top: 14px; }
-details.more summary { cursor: pointer; color: var(--accent); font-size: 13px; font-weight: 600; list-style: none; display: inline-flex; align-items: center; gap: 6px; }
-details.more summary::-webkit-details-marker { display: none; }
-details.more summary::before { content: "+"; display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--accent-soft); font-weight: 800; }
-details.more[open] summary::before { content: "–"; }
+details.more summary { cursor: pointer; color: var(--accent); font-size: 13px; font-weight: 600; }
