@@ -337,7 +337,7 @@
     if (!has) { $("aiImg").src = mannUrl(); $("aiImg").classList.add("dim"); } else $("aiImg").classList.remove("dim");
   }
   $("gateJump").addEventListener("click", () => { $("keyPanel").scrollIntoView({ behavior: "smooth", block: "center" }); $("gateKey").focus(); });
-  $("gateGo").addEventListener("click", () => { const k = $("gateKey").value.trim(); if (!k.startsWith("AIza") || k.length < 30) { $("gateErr").textContent = "AIza… 로 시작하는 키를 붙여 넣어 주세요"; $("gateErr").hidden = false; return; } BF.ai.setKey(k); $("gateKey").value = ""; $("gateErr").hidden = true; renderGate(); toast("AI 연결됨", 1500); if (stage.img && S.placeMode !== "manual") aiPlace(); scheduleAi(true); });
+  $("gateGo").addEventListener("click", () => { const k = $("gateKey").value.trim(); if (k.length < 20 || /\s/.test(k)) { $("gateErr").textContent = "키 전체를 그대로 붙여 넣어 주세요 (AIza… 또는 AQ.… 로 시작하는 긴 문자열)"; $("gateErr").hidden = false; return; } BF.ai.setKey(k); $("gateKey").value = ""; $("gateErr").hidden = true; renderGate(); toast("AI 연결됨", 1500); if (stage.img && S.placeMode !== "manual") aiPlace(); scheduleAi(true); });
   $("gateKey").addEventListener("keydown", e => { if (e.key === "Enter") $("gateGo").click(); });
   $("keyBtn").addEventListener("click", () => { if (!confirm("저장된 Gemini API 키를 지우고 다시 입력할까요?")) return; BF.ai.setKey(""); $("gateKey").value = ""; renderGate(); });
   function scheduleAi(now = false) {
