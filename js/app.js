@@ -7,8 +7,8 @@
 
   /* ---------- 저장/복원 ---------- */
   const LS = "bodyfit.v4";
-  const save = () => { try { localStorage.setItem(LS, JSON.stringify({ sex: S.sex, ageIn: $("ageIn").value, height: $("height").value, weight: $("weight").value, manual: S.manual, guides: S.guides })); } catch (e) { } };
-  const load = () => { try { const d = JSON.parse(localStorage.getItem(LS) || "null"); if (!d) return; S.sex = d.sex || "M"; S.manual = d.manual || {}; S.guides = d.guides ?? true; if (d.ageIn) $("ageIn").value = d.ageIn; if (d.height) $("height").value = d.height; if (d.weight) $("weight").value = d.weight; } catch (e) { } };
+  const save = () => { try { localStorage.setItem(LS, JSON.stringify({ sex: S.sex, ageIn: $("ageIn").value, height: $("height").value, weight: $("weight").value, chestIn: $("chestIn").value, waistCIn: $("waistCIn").value, manual: S.manual, guides: S.guides })); } catch (e) { } };
+  const load = () => { try { const d = JSON.parse(localStorage.getItem(LS) || "null"); if (!d) return; S.sex = d.sex || "M"; S.manual = d.manual || {}; S.guides = d.guides ?? true; if (d.ageIn) $("ageIn").value = d.ageIn; if (d.height) $("height").value = d.height; if (d.weight) $("weight").value = d.weight; if (d.chestIn) $("chestIn").value = d.chestIn; if (d.waistCIn) $("waistCIn").value = d.waistCIn; } catch (e) { } };
 
   /* ---------- 테마 ---------- */
 
@@ -17,7 +17,7 @@
   const group = () => S.sex + ageGroup();
   $("sexSeg").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; S.sex = b.dataset.v; [...$("sexSeg").children].forEach(x => x.classList.toggle("on", x === b)); update(); });
   $("ageIn").addEventListener("input", () => update());
-  $("height").addEventListener("input", () => update()); $("weight").addEventListener("input", () => update());
+  $("height").addEventListener("input", () => update()); $("weight").addEventListener("input", () => update()); $("chestIn").addEventListener("input", () => update()); $("waistCIn").addEventListener("input", () => update());
 
   $("legend2").innerHTML = BF.POINTS.map(p => `<span><b>${p.n}</b>${p.label}</span>`).join("");
 
@@ -171,7 +171,7 @@
     const sentGood = t => josa(t, "이", "가") + " 잘 어울려요";
     R.innerHTML = c.recommendations.map(r => `<div class="r"><h4>${r.part}</h4><p class="why">${r.why}</p>
       <ul class="rlist">${r.bad.slice(0, 3).map(b => `<li class="no">${sentBad(b)}</li>`).join("")}${r.good.slice(0, 3).map(g => `<li class="ok">${sentGood(g)}</li>`).join("")}</ul></div>`).join("");
-    $("sizes").innerHTML = (c.sizes || []).map(s => `<div class="s"><span>${s.part} 사이즈 가이드</span><b>${s.size}</b></div>`).join("");
+    $("sizes").innerHTML = (c.sizes || []).map(s => `<div class="s"><span>${s.part} 사이즈 가이드</span><b>${s.size}${s.tag && s.tag !== "인치" ? ` <em>(${s.tag})</em>` : s.tag === "인치" ? ` <em>인치</em>` : ""}</b><small>${s.basis}</small>${s.note ? `<small class="warn">${s.note}</small>` : ""}</div>`).join("");
     return c;
   }
   function weightKpi() {
@@ -430,7 +430,7 @@
   $("copyBtn").addEventListener("click", async () => { try { await navigator.clipboard.writeText($("summary").dataset.text || $("summary").textContent); $("copyBtn").textContent = "복사됨"; setTimeout(() => $("copyBtn").textContent = "복사", 1500); } catch (e) { } });
 
   /* ---------- 갱신 ---------- */
-  function currentValues() { const v = {}; ["height", "shoulder", "waist", "leg", "weight"].forEach(k => { const u = used(k); if (u) v[k] = u; }); return v; }
+  function currentValues() { const v = {}; ["height", "shoulder", "waist", "leg", "weight"].forEach(k => { const u = used(k); if (u) v[k] = u; }); const cc = parseFloat($("chestIn").value), wc = parseFloat($("waistCIn").value); if (cc > 0) v.chestC = cc; if (wc > 0) v.waistC = wc; v.group = group(); return v; }
   function renderAll() { renderWardrobe(); renderWorn(); syncCtrl(); renderAvatar(currentValues()); renderSummary(BF.spectrum(currentValues(), group()), BF.classify(BF.spectrum(currentValues(), group()), currentValues(), S.sex)); }
   function update(rebuild = true) {
     S.est = stage.measure(parseFloat($("height").value) || 0);

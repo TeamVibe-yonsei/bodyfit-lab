@@ -56,7 +56,7 @@ BF.classify = function (spec, values, sex) {
     label: `${frame} · ${leg} · ${stature}`, confidence: conf,
     legRatio: values.leg / values.height, swr: values.shoulder / values.waist,
     recommendations: BF.recommend(zs, zw, zl, zh, sex),
-    sizes: BF.sizeGuide(values, sex)
+    sizes: BF.sizeGuide(values, sex, values.group)
   };
 };
 
@@ -113,12 +113,37 @@ BF.recommend = function (zs, zw, zl, zh, sex) {
   return R;
 };
 
-BF.sizeGuide = function (values, sex) {
-  const nearest = (table, target) => { const keys = Object.keys(table); return keys.reduce((b, k) => Math.abs(table[k] - target) < Math.abs(table[b] - target) ? k : b, keys[0]); };
-  if (!BF.SIZES) return null;
+/* 둘레 추정: 정면 폭·BMI·어깨너비를 사이즈코리아 통계와 결합 (줄자 실측값이 있으면 그대로 사용) */
+BF.estimateCirc = function (values, groupKey) {
+  const ref = BF.REF[groupKey] || BF.REF.M20; const z = (k, v) => (v - ref[k][0]) / ref[k][1];
+  const bmi = values.weight && values.height ? values.weight / ((values.height / 100) ** 2) : null;
+  const out = {};
+  // 가슴둘레: BMI(체중 분포) 0.65 + 어깨너비(골격) 0.35 가중 z-점수
+  if (values.chestC) out.chestC = { v: values.chestC, src: "실측" };
+  else if (values.shoulder || bmi) {
+    const zc = bmi && values.shoulder ? 0.65 * z("bmi", bmi) + 0.35 * z("shoulder", values.shoulder) : bmi ? 0.8 * z("bmi", bmi) : 0.7 * z("shoulder", values.shoulder);
+    out.chestC = { v: ref.chestC[0] + ref.chestC[1] * zc, src: "추정" };
+  }
+  // 허리둘레: 정면 허리폭 × (또래 허리둘레/허리너비 비율) 0.6 + BMI 기반 0.4
+  if (values.waistC) out.waistC = { v: values.waistC, src: "실측" };
+  else if (values.waist) {
+    const byWidth = values.waist * ref.waistC[0] / ref.waist[0];
+    const byBmi = bmi ? ref.waistC[0] + ref.waistC[1] * z("bmi", bmi) : null;
+    out.waistC = { v: byBmi ? 0.6 * byWidth + 0.4 * byBmi : byWidth, src: "추정" };
+  }
+  return out;
+};
+BF.sizeGuide = function (values, sex, groupKey) {
+  const chart = BF.SIZE_CHART[sex === "F" ? "F" : "M"]; const c = BF.estimateCirc(values, groupKey || (sex === "F" ? "F20" : "M20"));
+  const pick = cm => { const row = chart.top.find(r => cm >= r[2] && cm < r[3]) || chart.top[chart.top.length - 1]; const i = chart.top.indexOf(row);
+    const dLo = cm - row[2], dHi = row[3] - cm; let note = "";
+    if (dLo < 1.5 && i > 0) note = `${chart.top[i - 1][0]}와 경계 — 슬림하게 입으려면 ${chart.top[i - 1][0]}`; else if (dHi < 1.5 && i < chart.top.length - 1) note = `${chart.top[i + 1][0]}와 경계 — 여유 있게 입으려면 ${chart.top[i + 1][0]}`;
+    return { size: row[0], tag: row[1], note }; };
   const out = [];
-  if (values.shoulder) out.push({ part: "상의", size: nearest(BF.SIZES.top, values.shoulder + 3.5) });
-  if (values.waist) out.push({ part: "하의", size: nearest(BF.SIZES.bottom, values.waist * 1.30) });
-  if (values.shoulder) out.push({ part: "아우터", size: nearest(BF.SIZES.outer, values.shoulder + 6) });
+  if (c.chestC) { const p = pick(c.chestC.v); out.push({ part: "상의", size: p.size, tag: p.tag, basis: `가슴둘레 ${c.chestC.src} ${c.chestC.v.toFixed(0)}cm`, note: p.note }); }
+  if (c.waistC) { const inch = c.waistC.v / 2.54; let n = Math.round(inch); n = Math.max(chart.bottomRange[0], Math.min(chart.bottomRange[1], n));
+    const frac = inch - Math.floor(inch); const note = frac > 0.35 && frac < 0.65 ? `${Math.floor(inch)}~${Math.ceil(inch)} 사이 — 브랜드별 실측 허리 확인` : "";
+    out.push({ part: "하의", size: String(n), tag: "인치", basis: `허리둘레 ${c.waistC.src} ${c.waistC.v.toFixed(0)}cm`, note }); }
+  if (c.chestC) { const p = pick(c.chestC.v + BF.OUTER_EASE); out.push({ part: "아우터", size: p.size, tag: p.tag, basis: `가슴둘레 +${BF.OUTER_EASE}cm 레이어링 기준`, note: p.note }); }
   return out.length ? out : null;
 };
