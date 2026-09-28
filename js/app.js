@@ -2,7 +2,7 @@
 (function () {
   "use strict";
   const $ = id => document.getElementById(id) || Object.assign(document.createElement("div"), { id });
-  const S = { sex: "M", age: "20", manual: {}, est: {}, sample: false, diagnosed: false, garments: [], sel: null, guides: true, photoLoaded: false, tab: "reco", editing: null, lastType: null, aiResult: null };
+  const S = { sex: "M", age: "20", manual: {}, est: {}, sample: false, diagnosed: false, garments: [], sel: null, guides: true, photoLoaded: false, tab: "reco", editing: null, lastType: null, aiResult: null, placeMode: "none" };
   const SAMPLE = { shoulder: 42.5, waist: 27.4, leg: 81.0 };
 
   /* ---------- 저장/복원 ---------- */
@@ -41,15 +41,38 @@
   $("photo").addEventListener("change", e => { const f = e.target.files[0]; if (f) loadImage(URL.createObjectURL(f)); e.target.value = ""; });
   async function autoDetect() {
     if (!stage.img) return;
-    setStatus("자동으로 위치를 잡는 중…", "busy");
+    setStatus("자동으로 위치를 잡는 중…", "busy"); S.placeMode = "none";
     try {
       const res = await BF.pose.detect(stage.img);
       if (!res.poseLandmarks) throw new Error("사람을 찾지 못했습니다");
       const { pts, confidence } = BF.pose.toPoints(res.poseLandmarks, stage.cv.width, stage.cv.height);
-      stage.setPoints(pts);
+      stage.setPoints(pts); S.placeMode = "auto";
       setStatus("숫자를 몸의 올바른 위치에 놓아 주세요", "ok");
     } catch (err) { setStatus("숫자를 몸의 올바른 위치에 놓아 주세요", "err"); }
+    if (BF.ai.key()) aiPlace();
   }
+  /* Gemini 좌표 찍기로 기준점 정밀 배치 (키가 있으면 사진 올릴 때 자동, 버튼으로 재실행) */
+  let aiPlacing = false;
+  async function aiPlace() {
+    if (!stage.img || aiPlacing) return;
+    if (!BF.ai.key()) { setStatus("AI 정밀 배치는 STEP 4에서 Gemini 키를 넣으면 사용할 수 있습니다", "err"); return; }
+    aiPlacing = true; $("aiPlaceBtn").disabled = true; setStatus("AI가 기준점을 찾는 중… (5~10초)", "busy");
+    try {
+      const b64 = await BF.ai.toPng(stage.img.src, 1280);
+      const pts = await BF.ai.locatePoints({ b64, useCard: stage.useCard, key: BF.ai.key() });
+      const W = stage.cv.width, H = stage.cv.height; const P = {};
+      ["head", "heel", "shL", "shR", "wL", "wR", "crotch"].forEach(k => { if (pts[k]) P[k] = { x: pts[k].x * W, y: pts[k].y * H }; });
+      const cur = stage.pts || {}; for (const k in cur) if (!P[k]) P[k] = cur[k];
+      // 좌우 어깨/허리는 화면 기준으로 정렬
+      if (P.shL.x > P.shR.x) [P.shL, P.shR] = [P.shR, P.shL]; if (P.wL.x > P.wR.x) [P.wL, P.wR] = [P.wR, P.wL];
+      if (stage.useCard && pts.cardA && pts.cardB) { P.cA = { x: pts.cardA.x * W, y: pts.cardA.y * H }; P.cB = { x: pts.cardB.x * W, y: pts.cardB.y * H }; }
+      stage.setPoints(P); if (P.cA) { stage.pts.cA = P.cA; stage.pts.cB = P.cB; stage.draw(); }
+      S.placeMode = "ai"; setStatus("AI가 기준점을 놓았습니다. 어긋난 점이 있으면 드래그로 고쳐 주세요", "ok"); update();
+    } catch (err) { setStatus("AI 배치 실패: " + (err.message || err) + " — 자동 배치 값을 사용합니다", "err"); }
+    finally { aiPlacing = false; $("aiPlaceBtn").disabled = false; }
+  }
+  $("aiPlaceBtn").addEventListener("click", aiPlace);
+  stage.onUser = () => { S.placeMode = "manual"; };
 
   /* ---------- 진단 ---------- */
   function diagnose() {
@@ -393,7 +416,8 @@
     if (!spec.length) { el.textContent = "아직 결과가 없습니다."; el.dataset.text = ""; return; }
     const fmt = p => `${p.unit === "" ? p.value.toFixed(2) : p.value.toFixed(1)}${p.unit === "%" ? "%" : p.unit ? p.unit : ""}`;
     const groups = [];
-    groups.push({ title: `${BF.REF[group()].label} 기준`, lines: spec.map(p => [p.name, `${fmt(p)}  ·  상위 ${p.topPct.toFixed(1)}%`]) });
+    const PM = { ai: "AI 정밀 배치", auto: "자동 배치", manual: "수동 조정", none: "직접 입력" };
+    groups.push({ title: `${BF.REF[group()].label} 기준`, lines: spec.map(p => [p.name, `${fmt(p)}  ·  상위 ${p.topPct.toFixed(1)}%`]).concat(S.photoLoaded ? [["측정 방식", `${PM[S.placeMode] || "자동 배치"} · ${S.est.scaleSource === "card" ? "카드 기준" : "키 기준"}`]] : []) });
     if (c) groups.push({ title: "체형과 추천", lines: [["체형", c.label]].concat(c.recommendations.map(r => [r.part, r.good.slice(0, 2).join(", ")])) });
     if (S.garments.length) groups.push({ title: "착용", lines: [["착용", S.garments.map(g => g.name + (g.size ? " " + g.size : "")).join(", ")]] });
     el.innerHTML = groups.map(g => `<div class="sg"><div class="sg-t">${g.title}</div>${g.lines.map(([k, v]) => `<div class="sl"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("")}</div>`).join("");

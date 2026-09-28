@@ -33,6 +33,36 @@ BF.ai = {
     throw lastErr || new Error("모델을 사용할 수 없습니다");
   },
 
+  /* 기준점 좌표 찍기(pointing): 사진에서 7개 몸 기준점(+카드 긴 변 양 끝)을 0~1000 정규 좌표로 받음 */
+  POINT_MODELS: ["gemini-2.5-flash", "gemini-2.5-pro"],
+  async locatePoints({ b64, useCard, key }) {
+    const prompt = `You are a precise anthropometric landmark annotator. The image shows one person standing upright, facing the camera, full body visible. Locate these landmarks as accurately as possible, on the person's body outline (not on clothing folds or background):
+- head: the topmost point of the head (include hair).
+- heel: the lowest point where the feet touch the floor (midpoint between the two feet).
+- shL: the LEFT shoulder in the image (viewer's left) — the outermost bony point of the shoulder (acromion), where the shoulder line meets the upper arm.
+- shR: the same point on the viewer's RIGHT shoulder.
+- wL / wR: the left and right edges of the torso silhouette at the NARROWEST part of the waist (between the ribs and the hip bones). Both at the same height.
+- crotch: the point where the two legs meet (inseam top).${useCard ? `
+- cardA / cardB: the two ends of the LONG edge of the credit-card-sized card the person is holding (the two corners of the longer side that is most visible).` : ""}
+Answer ONLY with JSON: {"head":[y,x],"heel":[y,x],"shL":[y,x],"shR":[y,x],"wL":[y,x],"wR":[y,x],"crotch":[y,x]${useCard ? `,"cardA":[y,x],"cardB":[y,x]` : ""}} where y and x are integers 0-1000 normalized to the image height and width.`;
+    let lastErr;
+    for (const m of this.POINT_MODELS) {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(key)}`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }, { inlineData: { mimeType: "image/png", data: b64 } }] }], generationConfig: { responseMimeType: "application/json", temperature: 0 } })
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) { lastErr = new Error(j.error?.message || `HTTP ${r.status}`); if (r.status === 404) continue; throw lastErr; }
+      const txt = (j.candidates?.[0]?.content?.parts || []).filter(p => p.text).map(p => p.text).join("");
+      const mm = txt.match(/\{[\s\S]*\}/); if (!mm) throw new Error("좌표를 읽지 못했습니다");
+      const o = JSON.parse(mm[0]); const out = {};
+      for (const k of ["head", "heel", "shL", "shR", "wL", "wR", "crotch", "cardA", "cardB"]) { const v = o[k]; if (Array.isArray(v) && v.length >= 2 && isFinite(v[0]) && isFinite(v[1])) out[k] = { y: v[0] / 1000, x: v[1] / 1000 }; }
+      if (!out.head || !out.heel || !out.shL || !out.wL || !out.crotch) throw new Error("기준점이 부족합니다");
+      return out;
+    }
+    throw lastErr || new Error("모델을 사용할 수 없습니다");
+  },
+
   /* 기본 모델 생성 (사용자 사진이 없을 때) */
   async makeModel({ sex, height, frame, key }) {
     const who = sex === "F" ? "Korean woman in her 20s" : "Korean man in his 20s";

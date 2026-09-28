@@ -52,7 +52,7 @@ BF.Stage = class {
       this.draw(); this.onChange && this.onChange(); e.preventDefault();
     } else { const h = this.nearest(q); if (h !== this.hover) { this.hover = h; this.draw(); } this.cv.style.cursor = h ? "grab" : "default"; }
   }
-  up() { this.drag = null; }
+  up() { if (this.drag && this.onUser) this.onUser(this.drag); this.drag = null; }
   draw() {
     const { ctx, cv, pts } = this; ctx.clearRect(0, 0, cv.width, cv.height);
     if (!this.img) return; ctx.drawImage(this.img, 0, 0, cv.width, cv.height);
