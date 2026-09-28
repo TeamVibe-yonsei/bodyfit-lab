@@ -28,18 +28,28 @@ BF.ai = {
     return out;
   },
   /* 후보를 차례로 시도: 모델 없음/사용 불가 오류면 다음 후보로 */
+  _dead: {},
+  friendly(msg, status) {
+    const m = msg || "";
+    if (/limit:\s*0/.test(m)) return "이 키의 무료 등급에서는 이미지 생성 모델을 쓸 수 없습니다. Google AI Studio에서 결제(종량제)를 설정하면 바로 사용됩니다 (이미지 1장당 약 50원).";
+    if (status === 429 || /quota|rate/i.test(m)) { const w = m.match(/retry in (\d+)/i); return `요청이 몰렸습니다. ${w ? Math.ceil(w[1]) + "초" : "잠시"} 후 다시 시도해 주세요.`; }
+    if (/api key not valid|invalid api key|api_key_invalid/i.test(m)) return "API 키가 올바르지 않습니다. STEP 1에서 키를 다시 넣어 주세요.";
+    if (/permission|forbidden/i.test(m) || status === 403) return "이 키로는 해당 모델에 접근할 수 없습니다.";
+    return m.length > 160 ? m.slice(0, 160) + "…" : m;
+  },
   async generate(kind, body, key) {
-    const cands = await this.candidates(kind, key); let lastErr;
+    const cands = (await this.candidates(kind, key)).filter(m => !this._dead[m]); let lastErr, lastStatus = 0, quota0 = false;
     for (const m of cands) {
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(key)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const j = await r.json().catch(() => ({}));
       if (r.ok) return j;
-      lastErr = new Error(j.error?.message || `HTTP ${r.status}`);
-      const msg = (j.error?.message || "").toLowerCase();
-      if (r.status === 404 || r.status === 400 && /model|not found|no longer|not supported/.test(msg) || /no longer available|not available|not found/.test(msg)) continue;
-      throw lastErr;
+      const raw = j.error?.message || `HTTP ${r.status}`; lastErr = raw; lastStatus = r.status;
+      const msg = raw.toLowerCase();
+      if (r.status === 404 || r.status === 400 && /model|not found|no longer|not supported/.test(msg) || /no longer available|not available|not found/.test(msg)) { this._dead[m] = true; continue; }
+      if (r.status === 429 && /limit:\s*0/.test(msg)) { this._dead[m] = true; quota0 = true; continue; }  // 무료 등급 한도 0 → 다른 모델 시도
+      throw new Error(this.friendly(raw, r.status));
     }
-    throw lastErr || new Error("사용 가능한 모델이 없습니다");
+    throw new Error(quota0 ? this.friendly("limit: 0", 429) : lastErr ? this.friendly(lastErr, lastStatus) : "사용 가능한 모델이 없습니다");
   },
   key() { try { return localStorage.getItem("tv.gemini.key") || ""; } catch (e) { return ""; } },
   setKey(k) { this._models = null; try { localStorage.setItem("tv.gemini.key", k.trim()); localStorage.removeItem("tv.gemini.models"); } catch (e) { } },
