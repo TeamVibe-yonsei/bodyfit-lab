@@ -515,11 +515,21 @@ h3.mt { margin-top: 18px; }
 .gate-box { width: min(440px, 100%); background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 22px; box-shadow: var(--shadow); }
 .gate-box h3 { margin: 0 0 8px; font-size: 17px; }
 .gate-box p { margin: 0 0 10px; font-size: 13px; color: var(--ink-2); line-height: 1.6; }
-.gate-box .how { color: var(--ink-2); font-size: 12.5px; margin: 0 0 12px; border: 1px solid var(--line-2); border-radius: 10px; padding: 8px 12px; }
-.gate-box .how summary { cursor: pointer; color: var(--accent); font-weight: 600; }
-.gate-box .how ol { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 6px; line-height: 1.55; }
-.gate-box .how b { color: var(--ink); }
-.gate-box .how .tip { margin: 10px 0 2px; color: var(--muted); font-size: 12px; }
+.keypanel { margin-bottom: 14px; }
+.key-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.key-state { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: var(--panel-2); color: var(--muted); vertical-align: middle; margin-left: 6px; }
+.key-state.on { background: #1f3a2c; color: var(--good); }
+.key-body { margin-top: 12px; display: grid; gap: 10px; max-width: 640px; }
+.key-body .row { display: flex; gap: 8px; }
+.key-body input { flex: 1; min-width: 0; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); color: var(--ink); }
+.key-body .err { color: #ffb4a3; font-size: 12.5px; }
+.gate-box.small { text-align: center; }
+.gate-box.small p { margin-bottom: 14px; }
+.key-body .how, .gate-box .how { color: var(--ink-2); font-size: 12.5px; margin: 0 0 12px; border: 1px solid var(--line-2); border-radius: 10px; padding: 8px 12px; }
+.key-body .how summary, .gate-box .how summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+.key-body .how ol, .gate-box .how ol { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 6px; line-height: 1.55; }
+.key-body .how b, .gate-box .how b { color: var(--ink); }
+.key-body .how .tip, .gate-box .how .tip { margin: 10px 0 2px; color: var(--muted); font-size: 12px; }
 .gate-box .row { display: flex; gap: 8px; }
 .gate-box input { flex: 1; min-width: 0; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); color: var(--ink); }
 .gate-box .err { margin-top: 8px; color: #ffb4a3; font-size: 12.5px; }

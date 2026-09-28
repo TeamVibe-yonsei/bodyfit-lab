@@ -332,10 +332,12 @@
   function renderGate() {
     const has = !!BF.ai.key();
     $("aiGate").hidden = has; $("fr").classList.toggle("gated", !has);
-    $("keyBtn").hidden = !has;
+    $("keyBtn").hidden = !has; $("keyBody").hidden = has; $("keyState").textContent = has ? "연결됨" : "키 없음"; $("keyState").classList.toggle("on", has);
+    $("aiPlaceBtn").hidden = !has;
     if (!has) { $("aiImg").src = mannUrl(); $("aiImg").classList.add("dim"); } else $("aiImg").classList.remove("dim");
   }
-  $("gateGo").addEventListener("click", () => { const k = $("gateKey").value.trim(); if (!k.startsWith("AIza") || k.length < 30) { $("gateErr").textContent = "AIza… 로 시작하는 키를 붙여 넣어 주세요"; $("gateErr").hidden = false; return; } BF.ai.setKey(k); $("gateErr").hidden = true; renderGate(); scheduleAi(true); });
+  $("gateJump").addEventListener("click", () => { $("keyPanel").scrollIntoView({ behavior: "smooth", block: "center" }); $("gateKey").focus(); });
+  $("gateGo").addEventListener("click", () => { const k = $("gateKey").value.trim(); if (!k.startsWith("AIza") || k.length < 30) { $("gateErr").textContent = "AIza… 로 시작하는 키를 붙여 넣어 주세요"; $("gateErr").hidden = false; return; } BF.ai.setKey(k); $("gateKey").value = ""; $("gateErr").hidden = true; renderGate(); toast("AI 연결됨", 1500); if (stage.img && S.placeMode !== "manual") aiPlace(); scheduleAi(true); });
   $("gateKey").addEventListener("keydown", e => { if (e.key === "Enter") $("gateGo").click(); });
   $("keyBtn").addEventListener("click", () => { if (!confirm("저장된 Gemini API 키를 지우고 다시 입력할까요?")) return; BF.ai.setKey(""); $("gateKey").value = ""; renderGate(); });
   function scheduleAi(now = false) {
