@@ -2,7 +2,7 @@
 (function () {
   "use strict";
   const $ = id => document.getElementById(id) || Object.assign(document.createElement("div"), { id });
-  const S = { sex: "M", age: "20", manual: {}, est: {}, sample: false, diagnosed: false, garments: [], sel: null, guides: true, photoLoaded: false, tab: "reco", editing: null, lastType: null, aiResult: null, placeMode: "none" };
+  const S = { sex: "M", age: "20", manual: {}, est: {}, sample: false, diagnosed: false, garments: [], sel: null, guides: true, photoLoaded: false, tab: "reco", editing: null, lastType: null, aiResult: null, placeMode: "none", showBasis: false };
   const SAMPLE = { shoulder: 42.5, waist: 27.4, leg: 81.0 };
 
   /* ---------- 저장/복원 ---------- */
@@ -171,7 +171,8 @@
     const sentGood = t => josa(t, "이", "가") + " 잘 어울려요";
     R.innerHTML = c.recommendations.map(r => `<div class="r"><h4>${r.part}</h4><p class="why">${r.why}</p>
       <ul class="rlist">${r.bad.slice(0, 3).map(b => `<li class="no">${sentBad(b)}</li>`).join("")}${r.good.slice(0, 3).map(g => `<li class="ok">${sentGood(g)}</li>`).join("")}</ul></div>`).join("");
-    $("sizes").innerHTML = (c.sizes || []).map(s => `<div class="s"><span>${s.part} 사이즈 가이드</span><b>${s.size}${s.tag && s.tag !== "인치" ? ` <em>(${s.tag})</em>` : s.tag === "인치" ? ` <em>인치</em>` : ""}</b><small>${s.basis}</small>${s.note ? `<small class="warn">${s.note}</small>` : ""}</div>`).join("");
+    $("sizes").innerHTML = (c.sizes || []).map(s => `<div class="s"><span>${s.part} 사이즈</span><b>${s.size}${s.tag && s.tag !== "인치" ? ` <em>(${s.tag})</em>` : s.tag === "인치" ? ` <em>인치</em>` : ""}</b>${s.note ? `<small class="warn">${s.note}</small>` : ""}<small class="basis" ${S.showBasis ? "" : "hidden"}>${s.basis}</small></div>`).join("") + (c.sizes ? `<button class="btn ghost basis-btn" id="basisBtn">${S.showBasis ? "추정치 숨기기" : "추정치 보기"}</button>` : "");
+    const bb = $("basisBtn"); if (bb) bb.addEventListener("click", () => { S.showBasis = !S.showBasis; update(false); });
     return c;
   }
   function weightKpi() {

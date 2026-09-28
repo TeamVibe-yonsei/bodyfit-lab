@@ -137,12 +137,13 @@ BF.sizeGuide = function (values, sex, groupKey) {
   const chart = BF.SIZE_CHART[sex === "F" ? "F" : "M"]; const c = BF.estimateCirc(values, groupKey || (sex === "F" ? "F20" : "M20"));
   const pick = cm => { const row = chart.top.find(r => cm >= r[2] && cm < r[3]) || chart.top[chart.top.length - 1]; const i = chart.top.indexOf(row);
     const dLo = cm - row[2], dHi = row[3] - cm; let note = "";
-    if (dLo < 1.5 && i > 0) note = `${chart.top[i - 1][0]}와 경계 — 슬림하게 입으려면 ${chart.top[i - 1][0]}`; else if (dHi < 1.5 && i < chart.top.length - 1) note = `${chart.top[i + 1][0]}와 경계 — 여유 있게 입으려면 ${chart.top[i + 1][0]}`;
+    const wa = n => n + (/[A-Za-z0-9]$/.test(n) && !/[LMS]$/.test(n) ? "과" : /L$/.test(n) ? "과" : "와");
+    if (dLo < 1.5 && i > 0) note = `${wa(chart.top[i - 1][0])} 경계, 슬림하게 입으려면 ${chart.top[i - 1][0]}`; else if (dHi < 1.5 && i < chart.top.length - 1) note = `${wa(chart.top[i + 1][0])} 경계, 여유 있게 입으려면 ${chart.top[i + 1][0]}`;
     return { size: row[0], tag: row[1], note }; };
   const out = [];
   if (c.chestC) { const p = pick(c.chestC.v); out.push({ part: "상의", size: p.size, tag: p.tag, basis: `가슴둘레 ${c.chestC.src} ${c.chestC.v.toFixed(0)}cm`, note: p.note }); }
   if (c.waistC) { const inch = c.waistC.v / 2.54; let n = Math.round(inch); n = Math.max(chart.bottomRange[0], Math.min(chart.bottomRange[1], n));
-    const frac = inch - Math.floor(inch); const note = frac > 0.35 && frac < 0.65 ? `${Math.floor(inch)}~${Math.ceil(inch)} 사이 — 브랜드별 실측 허리 확인` : "";
+    const frac = inch - Math.floor(inch); const note = frac > 0.35 && frac < 0.65 ? `${Math.floor(inch)}~${Math.ceil(inch)} 사이, 브랜드별 실측 허리 확인` : "";
     out.push({ part: "하의", size: String(n), tag: "인치", basis: `허리둘레 ${c.waistC.src} ${c.waistC.v.toFixed(0)}cm`, note }); }
   if (c.chestC) { const p = pick(c.chestC.v + BF.OUTER_EASE); out.push({ part: "아우터", size: p.size, tag: p.tag, basis: `가슴둘레 +${BF.OUTER_EASE}cm 레이어링 기준`, note: p.note }); }
   return out.length ? out : null;
