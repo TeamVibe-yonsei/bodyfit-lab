@@ -37,8 +37,8 @@ BF.ai = {
     if (/permission|forbidden/i.test(m) || status === 403) return "이 키로는 해당 모델에 접근할 수 없습니다";
     return m.length > 160 ? m.slice(0, 160) + "…" : m;
   },
-  async generate(kind, body, key) {
-    const cands = (await this.candidates(kind, key)).filter(m => !this._dead[m]); let lastErr, lastStatus = 0, quota0 = false;
+  async generate(kind, body, key, attempt = 0) {
+    const cands = (await this.candidates(kind, key)).filter(m => !this._dead[m]); let lastErr, lastStatus = 0, quota0 = false, busy = false;
     for (const m of cands) {
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(key)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const j = await r.json().catch(() => ({}));
@@ -47,8 +47,11 @@ BF.ai = {
       const msg = raw.toLowerCase();
       if (r.status === 404 || r.status === 400 && /model|not found|no longer|not supported/.test(msg) || /no longer available|not available|not found/.test(msg)) { this._dead[m] = true; continue; }
       if (r.status === 429 && /limit:\s*0/.test(msg)) { this._dead[m] = true; quota0 = true; continue; }  // 무료 등급 한도 0 → 다른 모델 시도
+      if (r.status === 503 || r.status === 429 || /high demand|overloaded|unavailable|try again later/.test(msg)) { busy = true; continue; }  // 혼잡 → 다른 모델 시도
       throw new Error(this.friendly(raw, r.status));
     }
+    if (busy && attempt < 2) { await new Promise(r => setTimeout(r, 4000 * (attempt + 1))); return this.generate(kind, body, key, attempt + 1); }  // 잠시 뒤 재시도(최대 2회)
+    if (busy) throw new Error("AI 모델이 지금 혼잡해요, 잠시 후 다시 시도해 주세요");
     throw new Error(quota0 ? this.friendly("limit: 0", 429) : lastErr ? this.friendly(lastErr, lastStatus) : "사용 가능한 모델이 없습니다");
   },
   key() { try { return localStorage.getItem("tv.gemini.key") || ""; } catch (e) { return ""; } },

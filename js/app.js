@@ -68,7 +68,7 @@
       if (stage.useCard && pts.cardA && pts.cardB) { P.cA = { x: pts.cardA.x * W, y: pts.cardA.y * H }; P.cB = { x: pts.cardB.x * W, y: pts.cardB.y * H }; }
       stage.setPoints(P); if (P.cA) { stage.pts.cA = P.cA; stage.pts.cB = P.cB; stage.draw(); }
       S.placeMode = "ai"; setStatus("AI가 기준점을 놓았습니다 어긋난 점이 있으면 드래그로 고쳐 주세요", "ok"); update();
-    } catch (err) { setStatus("AI 배치 실패: " + (err.message || err) + " — 자동 배치 값을 사용합니다", "err"); }
+    } catch (err) { setStatus("AI 배치 실패: " + (err.message || err) + " · 자동 배치 값을 사용해요", "err"); }
     finally { aiPlacing = false; $("aiPlaceBtn").disabled = false; }
   }
   $("aiPlaceBtn").addEventListener("click", aiPlace);
