@@ -2,7 +2,7 @@
 (function () {
   "use strict";
   const $ = id => document.getElementById(id) || Object.assign(document.createElement("div"), { id });
-  const S = { sex: "M", age: "20", manual: {}, est: {}, sample: false, diagnosed: false, garments: [], sel: null, guides: true, photoLoaded: false, tab: "top", editing: null, view: "mann", lastType: null };
+  const S = { sex: "M", age: "20", manual: {}, est: {}, sample: false, diagnosed: false, garments: [], sel: null, guides: true, photoLoaded: false, tab: "reco", editing: null, lastType: null, aiResult: null };
   const SAMPLE = { shoulder: 42.5, waist: 27.4, leg: 81.0 };
 
   /* ---------- 저장/복원 ---------- */
@@ -57,7 +57,7 @@
     S.diagnosed = true;
     ["s2", "s3", "s4"].forEach((id, i) => { const el = $(id); el.classList.remove("locked"); el.classList.add("reveal"); el.style.animationDelay = (i * 0.12) + "s"; });
     const rep = document.querySelector(".report"); rep.classList.remove("locked"); rep.classList.add("reveal"); rep.style.animationDelay = ".4s";
-    update(); if (BF.av3d?.inst) setTimeout(() => BF.av3d.inst.resize(), 50);
+    update();
     $("s2").scrollIntoView({ behavior: "smooth", block: "start" });
   }
   $("diagBtn").addEventListener("click", diagnose);
@@ -167,13 +167,18 @@
   const KIND_TITLE = { top: "상의", outer: "아우터", bottom: "하의", shoes: "신발", mine: "내 옷" };
   function renderWardrobe() {
     const g = $("wgrid"); g.innerHTML = "";
-    const items = S.tab === "mine" ? S.garments.filter(x => x.mine) : BF.CATALOG.filter(c => c.kind === S.tab);
+    let items, why = {};
+    if (S.tab === "reco") {
+      const m = S.lastType ? BF.recoMatch(S.lastType.recommendations, BF.CATALOG.concat(S.garments.filter(x => x.mine))) : [];
+      items = m.map(o => o.item); m.forEach(o => { why[o.item.id] = o.phrase; });
+      if (!items.length) g.innerHTML = '<div class="fr-empty" style="flex:1">STEP 1에서 진단하면 체형에 어울리는 옷이 여기에 모입니다.</div>';
+    } else items = S.tab === "mine" ? S.garments.filter(x => x.mine) : BF.CATALOG.filter(c => c.kind === S.tab);
     if (S.tab === "mine" && !items.length) { g.innerHTML = '<div class="fr-empty" style="flex:1">오른쪽 "내 옷 사진 추가"로 상품 컷을 올리면 여기에 보관됩니다.</div>'; }
     items.forEach(it => {
       const worn = S.garments.some(x => x.catId === it.id || x.id === it.id);
-      const el = document.createElement("div"); el.className = "pcard" + (worn ? " on" : "");
-      el.innerHTML = `${worn ? '<span class="pon">착용 중</span>' : ""}<div class="pimg"><img src="${it.url}" alt="${it.name}"></div><div class="pn">${it.name}</div><div class="pm">${it.fit || BF.KIND_LABEL[it.kind]}</div>`;
-      el.addEventListener("click", () => S.tab === "mine" ? selectGarment(it.id) : (worn ? unwear(it) : wearCatalog(it)));
+      const el = document.createElement("div"); el.className = "pcard" + (worn ? " on" : "") + (why[it.id] ? " rec" : "");
+      el.innerHTML = `${worn ? '<span class="pon">착용 중</span>' : ""}<div class="pimg"><img src="${it.url}" alt="${it.name}"></div><div class="pn">${it.name}</div><div class="pm">${why[it.id] ? `<span class="ok">✓ ${why[it.id]}</span>` : (it.fit || BF.KIND_LABEL[it.kind])}</div>`;
+      el.addEventListener("click", () => (it.mine ? selectGarment(it.id) : (worn ? unwear(it) : wearCatalog(it))));
       g.appendChild(el);
     });
   }
@@ -197,7 +202,7 @@
     const gm = { id: "g" + Date.now(), catId: it.id, name: it.name, kind: it.kind, url: it.url, w: it.w, h: it.h, refFrac: it.refFrac, size, sizeCm: BF.SIZES[it.kind][size], scale: 1, ys: 1, dx: 0, dy: 0, fit: it.fit, color: it.color, draw: it.draw };
     S.garments.push(gm); S.sel = gm.id; renderAll();
   }
-  function selectGarment(id) { S.sel = id; renderWorn(); syncCtrl(); renderAvatar(currentValues()); }
+  function selectGarment(id) { S.sel = id; renderWorn(); }
   const toast = (t, ms = 0) => { let d = $("tvToast"); if (!d.parentElement) { d = document.createElement("div"); d.id = "tvToast"; d.className = "tv-toast"; document.body.appendChild(d); } d.textContent = t; d.hidden = !t; if (ms) setTimeout(() => { d.hidden = true; }, ms); };
   $("garment").addEventListener("change", async e => {
     const files = [...e.target.files]; e.target.value = "";
@@ -207,7 +212,8 @@
       const kindTab = ["top", "outer", "bottom", "shoes"].includes(S.tab) ? S.tab : "top";
       const gm = { id: "g" + Date.now() + Math.random().toString(16).slice(2, 5), mine: true, name: f.name.replace(/\.[^.]+$/, ""), kind: kindTab, src: img, thr: 34, scale: 1, ys: 1, dx: 0, dy: 0 };
       // Gemini 키가 있으면: 캡처에서 옷만 추출해 상품컷으로 정리 + 종류 자동 판별
-      if (BF.ai.key()) {
+      if (!BF.ai.key()) { toast("먼저 Gemini API 키를 넣어 주세요", 2500); return; }
+      {
         try {
           toast("AI가 옷을 읽는 중… (10~20초)");
           const b64 = await BF.ai.toPng(img.src, 1024);
@@ -247,94 +253,32 @@
     L.querySelectorAll(".wl").forEach(el => el.addEventListener("click", e => { if (e.target.closest("select,button")) return; selectGarment(el.dataset.id); }));
     L.querySelectorAll(".sizechips button").forEach(btn => btn.addEventListener("click", () => { const id = btn.parentElement.dataset.size; const g = S.garments.find(x => x.id === id); g.size = btn.dataset.k; g.sizeCm = BF.SIZES[g.kind][btn.dataset.k]; g.sizeLocked = true; S.sel = id; renderWorn(); renderAvatar(values); }));
     L.querySelectorAll("select[data-kind]").forEach(sel => sel.addEventListener("change", () => { const g = S.garments.find(x => x.id === sel.dataset.kind); g.kind = sel.value; g.dx = g.dy = 0; renderAll(); }));
-    const g = S.garments.find(x => x.id === S.sel); $("gctrl").hidden = !g; if (g) { $("gthr").parentElement.hidden = !g.mine; }
+    const g = S.garments.find(x => x.id === S.sel); $("gctrl").hidden = !g;
   }
-  function syncCtrl() { const g = S.garments.find(x => x.id === S.sel); if (!g) return; $("gthr").value = g.thr || 34; $("gthrO").textContent = g.thr || 34; $("gscale").value = Math.round(g.scale * 100); $("gscaleO").textContent = Math.round(g.scale * 100) + "%"; $("gys").value = Math.round(g.ys * 100); $("gysO").textContent = Math.round(g.ys * 100) + "%"; }
-  $("gthr").addEventListener("input", e => { const g = S.garments.find(x => x.id === S.sel); if (!g || !g.mine) return; g.thr = +e.target.value; $("gthrO").textContent = g.thr; Object.assign(g, BF.removeBackground(g.src, g.thr)); renderWorn(); renderAvatar(currentValues()); });
-  $("gscale").addEventListener("input", e => { const g = S.garments.find(x => x.id === S.sel); if (!g) return; g.scale = e.target.value / 100; $("gscaleO").textContent = e.target.value + "%"; renderAvatar(currentValues()); });
-  $("gys").addEventListener("input", e => { const g = S.garments.find(x => x.id === S.sel); if (!g) return; g.ys = e.target.value / 100; $("gysO").textContent = e.target.value + "%"; renderAvatar(currentValues()); });
-  $("gcenter").addEventListener("click", () => { const g = S.garments.find(x => x.id === S.sel); if (!g) return; g.dx = g.dy = 0; g.scale = 1; g.ys = 1; syncCtrl(); renderAvatar(currentValues()); });
+  function syncCtrl() { }
   $("gdel").addEventListener("click", () => { S.garments = S.garments.filter(x => x.id !== S.sel); S.sel = S.garments[0]?.id || null; renderAll(); });
 
-  /* ---------- 아바타 ---------- */
-  const svg = $("avatar"); let geo = null;
-  function renderAvatar(values) {
-    geo = BF.avatarGeometry(values, S.sex);
-    let s = BF.avatarSvg(geo, { guides: S.guides });
-    const gs = S.garments.slice().sort((a, b) => BF.KIND_ORDER[a.kind] - BF.KIND_ORDER[b.kind]);
-    s += gs.map(gm => { const p = BF.garmentPlacement(gm, geo); return `<image data-id="${gm.id}" href="${gm.url}" x="${p.x.toFixed(1)}" y="${p.y.toFixed(1)}" width="${p.w.toFixed(1)}" height="${p.h.toFixed(1)}" preserveAspectRatio="none"/>` +
-      (S.sel === gm.id ? `<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" fill="none" stroke="var(--accent)" stroke-dasharray="4 3" stroke-width="1" pointer-events="none"/>` : ""); }).join("");
-    svg.innerHTML = s;
-    renderMann(values);
-    render3d(values);
-  }
-  const mannSvg = $("mann"); let mannGeo = null;
-  function mannGeometry(values) {
-    const key = BF.mannKey(S.sex, S.lastType?.frame); const A = BF.MANNEQUIN[key]; if (!A) return null;
-    const sc = 420 / A.h, offX = (320 - A.w * sc) / 2;
-    const X = x => offX + x * sc, Y = y => y * sc;
-    const H = values.height || 170;
-    const bodyPx = (A.bottom - A.top) * sc, Sv = values.shoulder || 40;
-    const sh = (A.shR - A.shL) * sc, wa = (A.wR - A.wL) * sc;   // 마네킹의 어깨(팔 포함)·허리 폭 (viewBox px)
-    const k = sh / Sv, kLow = bodyPx / H;                // 옷 크기는 "내 어깨너비 대비" 비율로 — 마네킹 몸에 맞춰 보이도록
-    return { key, url: BF.mannUrl(key), imgW: A.w * sc, imgH: A.h * sc, offX, cx: X((A.shL + A.shR) / 2), shY: Y(A.shY) - bodyPx * 0.035, waistY: Y(A.wY), crotchY: Y(A.crotch), hipY: Y(A.crotch) - bodyPx * 0.05,
-      bottom: Y(A.bottom), top: Y(A.top), sh, wa, hip: Math.max(wa * 1.2, sh * 0.9), k, kLow, S: values.shoulder || 40, W: values.waist || 28, L: values.leg || 78, H };
-  }
-  function renderMann(values) {
-    const g = mannGeometry(values); mannGeo = g; if (!g) { mannSvg.innerHTML = ""; return; }
-    let s = `<image class="base" href="${g.url}" x="${g.offX.toFixed(1)}" y="0" width="${g.imgW.toFixed(1)}" height="${g.imgH.toFixed(1)}" preserveAspectRatio="xMidYMid meet"/>`;
-    const gs = S.garments.slice().sort((a, b) => BF.KIND_ORDER[a.kind] - BF.KIND_ORDER[b.kind]);
-    s += gs.map(gm => { const p = BF.garmentPlacement(gm, g); return `<image data-id="${gm.id}" href="${gm.url}" x="${p.x.toFixed(1)}" y="${p.y.toFixed(1)}" width="${p.w.toFixed(1)}" height="${p.h.toFixed(1)}" preserveAspectRatio="none"/>` +
-      (S.sel === gm.id ? `<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" fill="none" stroke="var(--accent)" stroke-dasharray="4 3" stroke-width="1" pointer-events="none"/>` : ""); }).join("");
-    mannSvg.innerHTML = s;
-  }
-  // 마네킹 뷰 드래그·휠
-  let mdrag = null;
-  const mPos = e => { const pt = mannSvg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; return pt.matrixTransform(mannSvg.getScreenCTM().inverse()); };
-  mannSvg.addEventListener("pointerdown", e => { const im = e.target.closest("image:not(.base)"); if (!im) return; const gm = S.garments.find(g => g.id === im.dataset.id); S.sel = gm.id; const q = mPos(e); mdrag = { gm, sx: q.x - gm.dx, sy: q.y - gm.dy }; mannSvg.setPointerCapture(e.pointerId); renderWorn(); syncCtrl(); renderMann(currentValues()); e.preventDefault(); });
-  mannSvg.addEventListener("pointermove", e => { if (!mdrag) return; const q = mPos(e); mdrag.gm.dx = q.x - mdrag.sx; mdrag.gm.dy = q.y - mdrag.sy; renderMann(currentValues()); });
-  mannSvg.addEventListener("pointerup", () => { mdrag = null; });
-  mannSvg.addEventListener("wheel", e => { const im = e.target.closest("image:not(.base)"); if (!im) return; e.preventDefault(); const gm = S.garments.find(g => g.id === im.dataset.id); gm.scale = Math.max(.5, Math.min(2, gm.scale * (e.deltaY < 0 ? 1.04 : 0.96))); syncCtrl(); renderMann(currentValues()); }, { passive: false });
-  async function mannB64() { const g = mannGeometry(currentValues()); return g ? await BF.ai.toPng(g.url, 1024) : null; }
-  function render3d(values) {
-    if (!BF.av3d) return;
-    const w = values.weight, h = (values.height || 170) / 100; const ref = BF.REF[group()];
-    const bmiRatio = w ? (w / (h * h)) / (ref.weight[0] / ((ref.height[0] / 100) ** 2)) : 1;
-    BF.av3d.update({ values, sex: S.sex, frame: S.lastType ? S.lastType.frame : "균형형", bmiRatio, garments: S.garments });
-  }
-  window.addEventListener("av3d-ready", () => { BF.av3d.mount($("studio3d")); render3d(currentValues()); });
-  if (BF.av3d) { BF.av3d.mount($("studio3d")); }
-  $("viewSeg").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; S.view = b.dataset.v; [...$("viewSeg").children].forEach(x => x.classList.toggle("on", x === b));
-    $("studio3d").hidden = S.view !== "3d"; $("hint3d").hidden = S.view !== "3d"; $("avatar").hidden = S.view !== "2d"; $("mann").hidden = S.view !== "mann"; $("guideBtn").hidden = S.view !== "2d"; $("aiView").hidden = S.view !== "ai"; if (BF.av3d?.inst) BF.av3d.inst.resize(); renderAvatar(currentValues()); });
-  function setView(v) { const b = [...$("viewSeg").children].find(x => x.dataset.v === v); if (b) b.click(); }
-  let gdrag = null;
-  const svgPos = e => { const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); };
-  svg.addEventListener("pointerdown", e => { const im = e.target.closest("image"); if (!im) return; const gm = S.garments.find(g => g.id === im.dataset.id); S.sel = gm.id; const q = svgPos(e); gdrag = { gm, sx: q.x - gm.dx, sy: q.y - gm.dy }; svg.setPointerCapture(e.pointerId); renderWorn(); syncCtrl(); renderAvatar(currentValues()); e.preventDefault(); });
-  svg.addEventListener("pointermove", e => { if (!gdrag) return; const q = svgPos(e); gdrag.gm.dx = q.x - gdrag.sx; gdrag.gm.dy = q.y - gdrag.sy; renderAvatar(currentValues()); });
-  svg.addEventListener("pointerup", () => { gdrag = null; });
-  svg.addEventListener("wheel", e => { const im = e.target.closest("image"); if (!im) return; e.preventDefault(); const gm = S.garments.find(g => g.id === im.dataset.id); gm.scale = Math.max(.5, Math.min(2, gm.scale * (e.deltaY < 0 ? 1.04 : 0.96))); syncCtrl(); renderAvatar(currentValues()); }, { passive: false });
-  $("guideBtn").addEventListener("click", () => { S.guides = !S.guides; save(); renderAvatar(currentValues()); });
-
-  /* ---------- PNG ---------- */
+  /* ---------- 아바타(치수 기하만 계산; 화면은 AI 실사 스테이지) ---------- */
+  let geo = null;
+  function renderAvatar(values) { geo = BF.avatarGeometry(values, S.sex); scheduleAi(); }
+  function mannUrl() { return BF.mannUrl(BF.mannKey(S.sex, S.lastType?.frame)); }
+  async function mannB64() { return await BF.ai.toPng(mannUrl(), 1024); }
+  const download = (canvas, name) => { const a = document.createElement("a"); a.download = name; a.href = canvas.toDataURL("image/png"); a.click(); };
   function svgToPng(svgEl, w, h, bg) {
     return new Promise(resolve => {
-      const clone = svgEl.cloneNode(true); const cs = getComputedStyle(document.documentElement);
-      const style = `<style>.body{fill:${cs.getPropertyValue("--av-fill")};stroke:${cs.getPropertyValue("--av-stroke")}} .guides{stroke:${cs.getPropertyValue("--av-guide")};fill:${cs.getPropertyValue("--av-guide")}} text{font-family:monospace}</style>`;
-      clone.setAttribute("xmlns", "http://www.w3.org/2000/svg"); clone.insertAdjacentHTML("afterbegin", style);
-      clone.querySelectorAll("rect[stroke]").forEach(r => r.remove());
+      const clone = svgEl.cloneNode(true); clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
       const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(clone)], { type: "image/svg+xml" })); const img = new Image();
       img.onload = () => { const c = document.createElement("canvas"); c.width = w; c.height = h; const x = c.getContext("2d"); x.fillStyle = bg; x.fillRect(0, 0, w, h); x.drawImage(img, 0, 0, w, h); URL.revokeObjectURL(url); resolve(c); };
       img.src = url;
     });
   }
-  const download = (canvas, name) => { const a = document.createElement("a"); a.download = name; a.href = canvas.toDataURL("image/png"); a.click(); };
-  $("exportAv").addEventListener("click", async () => { if (S.view === "mann") { const c = await svgToPng(mannSvg, 960, 1260, "#0F1114"); download(c, "teamvibe_mannequin.png"); return; } if (S.view === "ai" && S.aiResult) { const a = document.createElement("a"); a.download = "teamvibe_ai.png"; a.href = S.aiResult; a.click(); return; } if (S.view === "3d" && BF.av3d?.inst) { const a = document.createElement("a"); a.download = "teamvibe_avatar_3d.png"; a.href = BF.av3d.inst.snapshot(1200, 1600); a.click(); return; } const c = await svgToPng(svg, 960, 1260, getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#fff"); download(c, "teamvibe_avatar.png"); });
+  $("dlBtn").addEventListener("click", () => { if (!S.aiResult) { toast("아직 생성된 착용 샷이 없습니다", 2000); return; } const a = document.createElement("a"); a.download = "teamvibe_tryon.png"; a.href = S.aiResult; a.click(); });
   $("shareBtn").addEventListener("click", async () => {
     const values = currentValues(); const spec = BF.spectrum(values, group()); const c = BF.classify(spec, values, S.sex);
     const W = 1080, H = 1350; const cv = document.createElement("canvas"); cv.width = W; cv.height = H; const x = cv.getContext("2d");
     x.fillStyle = "#F3F5F8"; x.fillRect(0, 0, W, H);
     x.fillStyle = "#16191F"; x.font = "800 44px Manrope, 'Noto Sans KR', sans-serif"; x.fillText("Team Vibe", 60, 90);
-    x.fillStyle = "#6B7480"; x.font = "500 20px 'Noto Sans KR', sans-serif"; x.fillText(`${BF.REF[group()].label} 기준 · ${new Date().toLocaleDateString("ko-KR")}`, 60, 124);
+    x.fillStyle = "#6B7480"; x.font = "500 20px 'Noto Sans KR', sans-serif"; x.fillText(new Date().toLocaleDateString("ko-KR"), 60, 124);
     x.fillStyle = "#2F5FD9"; x.font = "700 34px 'Noto Sans KR', sans-serif"; x.fillText(c ? c.label : "치수 입력 필요", 60, 190);
     let y = 250;
     spec.forEach(p => {
@@ -350,78 +294,56 @@
     });
     if (c) { y += 10; x.fillStyle = "#16191F"; x.font = "600 22px 'Noto Sans KR', sans-serif"; x.fillText("추천 스타일", 60, y); y += 34; x.font = "400 19px 'Noto Sans KR', sans-serif";
       c.recommendations.forEach(r => { x.fillStyle = "#2F5FD9"; x.fillText(r.part, 60, y); x.fillStyle = "#3D444D"; x.fillText(r.good.slice(0, 2).join(" · "), 200, y); y += 32; }); }
-    if (geo) { const av = await svgToPng(svg, 640, 840, "rgba(0,0,0,0)"); x.drawImage(av, W - 60 - 300, 130, 300, 394); }
-    x.fillStyle = "#6B7480"; x.font = "400 16px 'Noto Sans KR', sans-serif"; x.fillText("출처: 사이즈코리아 제8차 한국인 인체치수조사 · 사진 1장 추정 ±2~3cm · Team Vibe", 60, H - 50);
     download(cv, "teamvibe_result.png");
   });
 
-  /* ---------- AI 실사 착용 (Gemini) ---------- */
-  let aiModelB64 = null; // 생성한 기본 모델 캐시
+  /* ---------- AI 실사 착용 (Gemini) — 키 게이트 + 옷을 고르면 자동 생성 ---------- */
   async function garmentPngs() {
     const order = S.garments.slice().sort((a, b) => BF.KIND_ORDER[a.kind] - BF.KIND_ORDER[b.kind]);
     const out = [];
     for (const g of order) out.push({ name: g.name, kind: BF.KIND_LABEL[g.kind] || g.kind, size: g.size, b64: await BF.ai.toPng(g.mine && g.src ? g.src.src : g.url, 768) });
     return out;
   }
-  function openAi() {
-    const modal = document.createElement("div"); modal.className = "modal";
-    const hasKey = !!BF.ai.key();
-    modal.innerHTML = `<div class="box ai-box">
-      <h3>AI 실사 착용</h3>
-      <p>고른 옷을 ${S.photoLoaded ? "내 사진" : "AI 모델"} 위에 실사로 입혀 봅니다. Google Gemini 이미지 모델을 본인 API 키로 직접 호출하며(무료 등급, 하루 수백 장), 사진과 옷 이미지는 생성 요청에만 사용되고 이 사이트의 서버에는 저장되지 않습니다.</p>
-      <div id="aiKeyRow" ${hasKey ? "hidden" : ""}>
-        <p style="margin-bottom:6px"><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>에서 "Create API key"로 만든 키를 붙여 넣으세요. 이 기기의 브라우저에만 저장됩니다.</p>
-        <input type="password" id="aiKey" placeholder="AIza… 로 시작하는 API 키" autocomplete="off">
-      </div>
-      <div class="opt">
-        <label><input type="radio" name="aiBase" value="photo" ${S.photoLoaded ? "checked" : "disabled"}> 내 사진에 입히기${S.photoLoaded ? "" : " (STEP 1 사진 필요)"}</label>
-        <label><input type="radio" name="aiBase" value="model" ${S.photoLoaded ? "" : "checked"}> 마네킹에 입히기</label>
-        <label><input type="radio" name="aiBase" value="flat"> 코디 플랫레이 컷</label>
-      </div>
-      <div class="prog" id="aiProg" hidden><span class="dot"></span><span id="aiProgT">생성 중… 20~40초 걸립니다</span></div>
-      <div class="err" id="aiErr" hidden></div>
-      <div class="row" style="justify-content:space-between">
-        <button class="btn ghost" id="aiKeyReset" ${hasKey ? "" : "hidden"}>키 변경</button>
-        <span style="flex:1"></span>
-        <button class="btn" id="aiCancel">닫기</button><button class="btn primary" id="aiGo">생성</button>
-      </div></div>`;
-    document.body.appendChild(modal);
-    const close = () => modal.remove();
-    modal.querySelector("#aiCancel").onclick = close; modal.addEventListener("click", e => { if (e.target === modal) close(); });
-    modal.querySelector("#aiKeyReset").onclick = () => { modal.querySelector("#aiKeyRow").hidden = false; modal.querySelector("#aiKeyReset").hidden = true; };
-    modal.querySelector("#aiGo").onclick = async () => {
-      const err = modal.querySelector("#aiErr"), prog = modal.querySelector("#aiProg"), go = modal.querySelector("#aiGo"); err.hidden = true;
-      const keyIn = modal.querySelector("#aiKey"); if (keyIn && !modal.querySelector("#aiKeyRow").hidden) { if (!keyIn.value.trim()) { err.textContent = "API 키를 입력해 주세요"; err.hidden = false; return; } BF.ai.setKey(keyIn.value); }
-      const key = BF.ai.key(); if (!key) { err.textContent = "API 키가 없습니다"; err.hidden = false; return; }
-      if (!S.garments.length) { err.textContent = "먼저 옷을 골라 주세요"; err.hidden = false; return; }
-      const base = modal.querySelector("input[name=aiBase]:checked").value;
-      go.disabled = true; prog.hidden = false;
-      try {
-        if (base === "flat") { const gs0 = await garmentPngs(); const url0 = await BF.ai.flatLay({ garments: gs0, key }); $("aiImg").src = url0; S.aiResult = url0; setView("ai"); close(); return; }
-        let personB64;
-        if (base === "photo") { personB64 = await BF.ai.toPng(stage.img.src, 1024); }
-        else {
-          personB64 = await mannB64();
-          if (!personB64) { if (!aiModelB64) { modal.querySelector("#aiProgT").textContent = "기본 모델 생성 중… (처음 한 번)"; const url = await BF.ai.makeModel({ sex: S.sex, height: used("height") || 170, frame: S.lastType?.frame, key }); aiModelB64 = url.split(",")[1]; } personB64 = aiModelB64; }
-        }
-        modal.querySelector("#aiProgT").textContent = "옷 입히는 중… 20~40초";
-        const gs = await garmentPngs(); const v = currentValues();
-        const sizesNote = `person shoulder width ${v.shoulder ? v.shoulder.toFixed(0) : "?"} cm, height ${v.height || "?"} cm`;
-        const url = await BF.ai.tryOn({ personB64, garments: gs, sizesNote, key });
-        $("aiImg").src = url; S.aiResult = url; setView("ai"); close();
-      } catch (e) { err.textContent = "실패: " + (e.message || e); err.hidden = false; go.disabled = false; prog.hidden = true; }
-    };
+  const aiCache = new Map(); let aiTimer = null, aiBusy = false, aiDirty = false;
+  function aiSig() { return BF.mannKey(S.sex, S.lastType?.frame) + "|" + S.garments.slice().sort((a, b) => BF.KIND_ORDER[a.kind] - BF.KIND_ORDER[b.kind]).map(g => g.id + ":" + (g.size || "")).join(","); }
+  function renderGate() {
+    const has = !!BF.ai.key();
+    $("aiGate").hidden = has; $("fr").classList.toggle("gated", !has);
+    $("keyBtn").hidden = !has;
+    if (!has) { $("aiImg").src = mannUrl(); $("aiImg").classList.add("dim"); } else $("aiImg").classList.remove("dim");
   }
-  $("aiBtn").addEventListener("click", openAi);
+  $("gateGo").addEventListener("click", () => { const k = $("gateKey").value.trim(); if (!k.startsWith("AIza") || k.length < 30) { $("gateErr").textContent = "AIza… 로 시작하는 키를 붙여 넣어 주세요"; $("gateErr").hidden = false; return; } BF.ai.setKey(k); $("gateErr").hidden = true; renderGate(); scheduleAi(true); });
+  $("gateKey").addEventListener("keydown", e => { if (e.key === "Enter") $("gateGo").click(); });
+  $("keyBtn").addEventListener("click", () => { if (!confirm("저장된 Gemini API 키를 지우고 다시 입력할까요?")) return; BF.ai.setKey(""); $("gateKey").value = ""; renderGate(); });
+  function scheduleAi(now = false) {
+    if (!BF.ai.key()) return;
+    clearTimeout(aiTimer); aiTimer = setTimeout(runAi, now ? 50 : 900);
+  }
+  async function runAi() {
+    if (!BF.ai.key()) return;
+    const img = $("aiImg");
+    if (!S.garments.length) { S.aiResult = null; img.src = mannUrl(); $("aiState").hidden = true; return; }
+    const sig = aiSig();
+    if (aiCache.has(sig)) { S.aiResult = aiCache.get(sig); img.src = S.aiResult; $("aiState").hidden = true; return; }
+    if (aiBusy) { aiDirty = true; return; }
+    aiBusy = true; $("aiState").hidden = false; $("aiStateT").textContent = "옷 입히는 중… 20~40초"; $("aiErr").hidden = true;
+    try {
+      const key = BF.ai.key();
+      const [personB64, gs] = await Promise.all([mannB64(), garmentPngs()]);
+      const v = currentValues();
+      const sizesNote = `person shoulder width ${v.shoulder ? v.shoulder.toFixed(0) : "?"} cm, height ${v.height || "?"} cm`;
+      const url = await BF.ai.tryOn({ personB64, garments: gs, sizesNote, key });
+      aiCache.set(sig, url);
+      if (sig === aiSig()) { S.aiResult = url; img.src = url; }
+    } catch (e) { $("aiErr").textContent = "생성 실패: " + (e.message || e); $("aiErr").hidden = false; }
+    finally { aiBusy = false; $("aiState").hidden = true; if (aiDirty) { aiDirty = false; scheduleAi(true); } }
+  }
+  $("regenBtn").addEventListener("click", () => { aiCache.delete(aiSig()); scheduleAi(true); });
+  renderGate();
 
   /* ---------- 룩북 카드 ---------- */
   const loadImg = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = src; });
-  async function avatarSnapshot() {
-    if (S.view === "ai" && S.aiResult) return await loadImg(S.aiResult);
-    if (S.view === "mann") { const c = await svgToPng(mannSvg, 640, 840, "rgba(0,0,0,0)"); return await loadImg(c.toDataURL("image/png")); }
-    if (S.view === "3d" && BF.av3d?.inst) return await loadImg(BF.av3d.inst.snapshot(900, 1200));
-    const c = await svgToPng(svg, 640, 840, "rgba(0,0,0,0)"); return await loadImg(c.toDataURL("image/png"));
-  }
+  async function avatarSnapshot() { return await loadImg(S.aiResult || mannUrl()); }
   const rr = (x, X, y, w, h, r) => { x.beginPath(); x.roundRect(X, y, w, h, r); };
   async function makeLookbook() {
     if (!S.garments.length) { alert("먼저 옷을 골라 주세요."); return; }
@@ -484,7 +406,7 @@
     renderMeasures();
     const values = currentValues(); const spec = BF.spectrum(values, group());
     const r = BF.REF[group()]; $("groupChip").textContent = r.label.replace(" (근사)", "") + " 기준";
-    renderSpec(spec); const c = renderType(spec, values); S.lastType = c;
+    renderSpec(spec); const c = renderType(spec, values); S.lastType = c; renderWardrobe();
     // 옷 사이즈 자동 재선택(치수 바뀌면)
     BF.setSizeSex(S.sex);
     S.garments.forEach(g => { if (g.refFrac) { if (!g.sizeLocked || BF.SIZES[g.kind][g.size] == null) { g.sizeLocked = false; g.size = defaultSize(g.kind, values); } g.sizeCm = BF.SIZES[g.kind][g.size]; } });

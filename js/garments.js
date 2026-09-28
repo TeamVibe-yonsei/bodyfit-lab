@@ -70,22 +70,30 @@ const DRAW = {
 
 /* 카탈로그: refFrac = 기준 치수가 그림 폭에서 차지하는 비율 */
 BF.CATALOG = [
-  { id: "tee-white", name: "베이직 티셔츠", kind: "top", draw: "tee", color: "#F4F4F1", refFrac: .78, w: 200, h: 220, fit: "레귤러" },
-  { id: "tee-black", name: "베이직 티셔츠", kind: "top", draw: "tee", color: "#23252B", refFrac: .78, w: 200, h: 220, fit: "레귤러" },
-  { id: "tee-navy", name: "베이직 티셔츠", kind: "top", draw: "tee", color: "#2E3F66", refFrac: .78, w: 200, h: 220, fit: "레귤러" },
-  { id: "shirt-blue", name: "옥스포드 셔츠", kind: "top", draw: "shirt", color: "#BFD3EC", refFrac: .76, w: 200, h: 260, fit: "레귤러" },
-  { id: "shirt-white", name: "옥스포드 셔츠", kind: "top", draw: "shirt", color: "#F7F7F4", refFrac: .76, w: 200, h: 260, fit: "레귤러" },
-  { id: "hoodie-grey", name: "후드 스웨트셔츠", kind: "top", draw: "hoodie", color: "#A7ABB3", refFrac: .76, w: 200, h: 260, fit: "세미오버" },
-  { id: "hoodie-green", name: "후드 스웨트셔츠", kind: "top", draw: "hoodie", color: "#3F6B4F", refFrac: .76, w: 200, h: 260, fit: "세미오버" },
-  { id: "coat-camel", name: "싱글 코트", kind: "outer", draw: "coat", color: "#C9A57A", refFrac: .76, w: 200, h: 340, fit: "레귤러" },
-  { id: "coat-black", name: "싱글 코트", kind: "outer", draw: "coat", color: "#2A2C31", refFrac: .76, w: 200, h: 340, fit: "레귤러" },
-  { id: "jeans-indigo", name: "스트레이트 데님", kind: "bottom", draw: "jeans", color: "#3A4E7A", refFrac: .80, w: 160, h: 300, fit: "스트레이트" },
-  { id: "jeans-black", name: "스트레이트 데님", kind: "bottom", draw: "jeans", color: "#2B2C30", refFrac: .80, w: 160, h: 300, fit: "스트레이트" },
-  { id: "chino-beige", name: "치노 팬츠", kind: "bottom", draw: "jeans", color: "#CFC2A6", refFrac: .80, w: 160, h: 300, fit: "스트레이트" },
-  { id: "wide-grey", name: "와이드 슬랙스", kind: "bottom", draw: "wide", color: "#7B7F86", refFrac: .674, w: 190, h: 300, fit: "와이드" },
-  { id: "shorts-khaki", name: "버뮤다 쇼츠", kind: "bottom", draw: "shorts", color: "#8B8A6A", refFrac: .80, w: 160, h: 150, fit: "레귤러" },
-  { id: "sneaker-white", name: "스니커즈", kind: "shoes", draw: "sneaker", color: "#F2F2EE", refFrac: .45, w: 220, h: 80, fit: "" },
-  { id: "sneaker-black", name: "스니커즈", kind: "shoes", draw: "sneaker", color: "#2A2B2F", refFrac: .45, w: 220, h: 80, fit: "" }
+  { id: "tee-white", tags: ["티셔츠","레귤러","라운드","밝은 톤","단색"], name: "베이직 티셔츠", kind: "top", draw: "tee", color: "#F4F4F1", refFrac: .78, w: 200, h: 220, fit: "레귤러" },
+  { id: "tee-black", tags: ["티셔츠","레귤러","라운드","어두운","단색"], name: "베이직 티셔츠", kind: "top", draw: "tee", color: "#23252B", refFrac: .78, w: 200, h: 220, fit: "레귤러" },
+  { id: "tee-navy", tags: ["티셔츠","레귤러","라운드","어두운","단색"], name: "베이직 티셔츠", kind: "top", draw: "tee", color: "#2E3F66", refFrac: .78, w: 200, h: 220, fit: "레귤러" },
+  { id: "shirt-blue", tags: ["셔츠","단추","레귤러","밝은 톤","어깨선"], name: "옥스포드 셔츠", kind: "top", draw: "shirt", color: "#BFD3EC", refFrac: .76, w: 200, h: 260, fit: "레귤러" },
+  { id: "shirt-white", tags: ["셔츠","단추","레귤러","밝은 톤","어깨선"], name: "옥스포드 셔츠", kind: "top", draw: "shirt", color: "#F7F7F4", refFrac: .76, w: 200, h: 260, fit: "레귤러" },
+  { id: "hoodie-grey", tags: ["세미오버","오버핏","후드","두께감","드롭숄더"], name: "후드 스웨트셔츠", kind: "top", draw: "hoodie", color: "#A7ABB3", refFrac: .76, w: 200, h: 260, fit: "세미오버" },
+  { id: "hoodie-green", tags: ["세미오버","오버핏","후드","두께감","드롭숄더","어두운"], name: "후드 스웨트셔츠", kind: "top", draw: "hoodie", color: "#3F6B4F", refFrac: .76, w: 200, h: 260, fit: "세미오버" },
+  { id: "coat-camel", tags: ["롱코트","코트","볼륨"], name: "싱글 코트", kind: "outer", draw: "coat", color: "#C9A57A", refFrac: .76, w: 200, h: 340, fit: "레귤러" },
+  { id: "coat-black", tags: ["롱코트","코트","어두운","원톤"], name: "싱글 코트", kind: "outer", draw: "coat", color: "#2A2C31", refFrac: .76, w: 200, h: 340, fit: "레귤러" },
+  { id: "jeans-indigo", tags: ["스트레이트","데님","미드"], name: "스트레이트 데님", kind: "bottom", draw: "jeans", color: "#3A4E7A", refFrac: .80, w: 160, h: 300, fit: "스트레이트" },
+  { id: "jeans-black", tags: ["스트레이트","데님","어두운","톤 통일"], name: "스트레이트 데님", kind: "bottom", draw: "jeans", color: "#2B2C30", refFrac: .80, w: 160, h: 300, fit: "스트레이트" },
+  { id: "chino-beige", tags: ["스트레이트","치노","테이퍼드"], name: "치노 팬츠", kind: "bottom", draw: "jeans", color: "#CFC2A6", refFrac: .80, w: 160, h: 300, fit: "스트레이트" },
+  { id: "wide-grey", tags: ["와이드","슬랙스","세미와이드"], name: "와이드 슬랙스", kind: "bottom", draw: "wide", color: "#7B7F86", refFrac: .674, w: 190, h: 300, fit: "와이드" },
+  { id: "shorts-khaki", tags: ["쇼츠","크롭"], name: "버뮤다 쇼츠", kind: "bottom", draw: "shorts", color: "#8B8A6A", refFrac: .80, w: 160, h: 150, fit: "레귤러" },
+  { id: "sneaker-white", tags: ["스니커즈"], name: "스니커즈", kind: "shoes", draw: "sneaker", color: "#F2F2EE", refFrac: .45, w: 220, h: 80, fit: "" },
+  { id: "sneaker-black", tags: ["스니커즈","톤 통일"], name: "스니커즈", kind: "shoes", draw: "sneaker", color: "#2A2B2F", refFrac: .45, w: 220, h: 80, fit: "" }
 ];
 BF.CATALOG.forEach(c => { c.url = DRAW[c.draw](c.color); });
+/* STEP 3 추천 문구 ↔ 옷 태그 매칭: 추천 "좋아요" 문장에 태그가 포함되면 추천 옷 */
+BF.recoMatch = function (recs, items) {
+  const out = [];
+  (recs || []).forEach(r => (r.good || []).forEach(phrase => {
+    items.forEach(it => { if ((it.tags || []).some(t => phrase.includes(t)) && !out.some(o => o.item === it)) out.push({ item: it, part: r.part, phrase }); });
+  }));
+  return out;
+};
 BF.KIND_LABEL = { top: "상의", outer: "아우터", bottom: "하의", dress: "원피스", shoes: "신발" };
