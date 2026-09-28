@@ -389,14 +389,17 @@
 
   /* ---------- 요약 ---------- */
   function renderSummary(spec, c) {
-    if (!spec.length) { $("summary").textContent = "아직 결과가 없습니다."; return; }
-    const lines = [`[Team Vibe] ${BF.REF[group()].label} 기준`];
-    spec.forEach(p => lines.push(`${p.name} ${p.unit === "" ? p.value.toFixed(2) : p.value.toFixed(1)}${p.unit === "%" ? "%" : p.unit ? p.unit : ""} (상위 ${p.topPct.toFixed(1)}%)`));
-    if (c) { lines.push(`체형: ${c.label}`); c.recommendations.forEach(r => lines.push(`${r.part}: ${r.good.slice(0, 2).join(", ")}`)); }
-    if (S.garments.length) lines.push("착용: " + S.garments.map(g => g.name + (g.size ? " " + g.size : "")).join(", "));
-    $("summary").textContent = lines.join("\n");
+    const el = $("summary");
+    if (!spec.length) { el.textContent = "아직 결과가 없습니다."; el.dataset.text = ""; return; }
+    const fmt = p => `${p.unit === "" ? p.value.toFixed(2) : p.value.toFixed(1)}${p.unit === "%" ? "%" : p.unit ? p.unit : ""}`;
+    const groups = [];
+    groups.push({ title: `${BF.REF[group()].label} 기준`, lines: spec.map(p => [p.name, `${fmt(p)}  ·  상위 ${p.topPct.toFixed(1)}%`]) });
+    if (c) groups.push({ title: "체형과 추천", lines: [["체형", c.label]].concat(c.recommendations.map(r => [r.part, r.good.slice(0, 2).join(", ")])) });
+    if (S.garments.length) groups.push({ title: "착용", lines: [["착용", S.garments.map(g => g.name + (g.size ? " " + g.size : "")).join(", ")]] });
+    el.innerHTML = groups.map(g => `<div class="sg"><div class="sg-t">${g.title}</div>${g.lines.map(([k, v]) => `<div class="sl"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("")}</div>`).join("");
+    el.dataset.text = groups.map(g => `[Team Vibe] ${g.title}\n` + g.lines.map(([k, v]) => `${k}: ${v.replace(/\s+·\s+/g, " · ")}`).join("\n")).join("\n\n");
   }
-  $("copyBtn").addEventListener("click", async () => { try { await navigator.clipboard.writeText($("summary").textContent); $("copyBtn").textContent = "복사됨"; setTimeout(() => $("copyBtn").textContent = "복사", 1500); } catch (e) { } });
+  $("copyBtn").addEventListener("click", async () => { try { await navigator.clipboard.writeText($("summary").dataset.text || $("summary").textContent); $("copyBtn").textContent = "복사됨"; setTimeout(() => $("copyBtn").textContent = "복사", 1500); } catch (e) { } });
 
   /* ---------- 갱신 ---------- */
   function currentValues() { const v = {}; ["height", "shoulder", "waist", "leg", "weight"].forEach(k => { const u = used(k); if (u) v[k] = u; }); return v; }
