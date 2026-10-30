@@ -570,3 +570,19 @@ details.more summary { cursor: pointer; color: var(--accent); font-size: 13px; f
 .curve svg { display: block; width: 100%; height: auto; }
 .curve .cf { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 2px; }
 .curve .cf b { color: var(--ink-2); font-weight: 600; }
+
+/* v60: 모델 분포 범례, 연구 기록 */
+.clegend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin: 2px 0 8px; }
+.clegend span { display: inline-flex; align-items: center; gap: 6px; }
+.clegend .sw { width: 18px; height: 0; border-top: 2px solid; display: inline-block; }
+.clegend .sw.pop { border-color: rgba(109,149,242,.95); }
+.clegend .sw.mod { border-color: #FF8A4D; border-top-style: dashed; }
+.clegend .sw.me { width: 10px; height: 10px; border: 2px solid #0F1114; background: #fff; border-radius: 50%; }
+.curve .ch .rk em { font-style: normal; font-family: var(--sans); font-size: 12px; font-weight: 600; color: #FF8A4D; margin-left: 10px; }
+.curves .csrc { margin-top: 2px; font-size: 11px; }
+.rec { margin-top: 16px; }
+.rec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+.rec-head h3 { margin: 0; }
+.rec .row { gap: 8px; flex-wrap: wrap; }
+.rec input[type=text] { flex: 1; min-width: 180px; background: var(--panel-2); border: 1px solid var(--line-2); color: var(--text); border-radius: 10px; padding: 9px 12px; font-size: 14px; }
+.rec input[type=text]:focus { outline: none; border-color: var(--accent); }

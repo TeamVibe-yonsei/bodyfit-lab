@@ -130,40 +130,84 @@
     return `rgb(${Math.round(lerp(a[0], b[0], u))},${Math.round(lerp(a[1], b[1], u))},${Math.round(lerp(a[2], b[2], u))})`;
   }
   /* 정규분포 곡선: 또래 평균·표준편차로 종 모양 곡선을 그리고 내 위치를 표시 */
-  const CURVE_KEYS = ["height", "legRatio", "swr"];
+  const CURVE_KEYS = ["height", "weight", "bmi"];
   function renderCurves(spec) {
     const box = $("curves"); if (!box) return; box.innerHTML = "";
     const items = CURVE_KEYS.map(k => spec.find(p => p.key === k)).filter(Boolean);
-    if (!items.length) { box.innerHTML = '<div class="empty">키와 치수가 있으면 또래 분포가 표시됩니다</div>'; return; }
+    if (!items.length) { box.innerHTML = '<div class="empty">키와 몸무게를 넣으면 또래 분포와 모델 분포가 표시됩니다</div>'; return; }
+    const MR = BF.MODEL_REF[S.sex];
+    const lg = document.createElement("div"); lg.className = "clegend";
+    lg.innerHTML = `<span><i class="sw pop"></i>또래 (사이즈코리아)</span><span><i class="sw mod"></i>쇼핑몰 모델 (n=${MR.n})</span><span><i class="sw me"></i>나</span>`;
+    box.appendChild(lg);
     items.forEach(p => {
-      const W = 520, H = 130, padL = 10, padR = 10, base = H - 24, top = 16;
-      const zmin = -3.2, zmax = 3.2; const X = z => padL + (z - zmin) / (zmax - zmin) * (W - padL - padR);
+      const W = 520, H = 140, padL = 10, padR = 10, base = H - 24, top = 14;
+      const zmin = -3.6, zmax = 3.6; const X = z => padL + (z - zmin) / (zmax - zmin) * (W - padL - padR);
       const pdf = z => Math.exp(-0.5 * z * z); const Y = z => base - pdf(z) * (base - top);
       const zc = Math.max(zmin, Math.min(zmax, p.z));
-      let d = `M ${X(zmin).toFixed(1)} ${base}`; for (let z = zmin; z <= zmax + 1e-9; z += 0.1) d += ` L ${X(z).toFixed(1)} ${Y(z).toFixed(1)}`; d += ` L ${X(zmax).toFixed(1)} ${base} Z`;
-      // 내 위치 기준 "나보다 아래" 영역 채우기 (상위 % 영역은 밝게)
+      const bell = (mu, sg) => { let d = `M ${X(zmin).toFixed(1)} ${base}`; for (let z = zmin; z <= zmax + 1e-9; z += 0.08) { const y = base - pdf((z - mu) / sg) * (base - top); d += ` L ${X(z).toFixed(1)} ${y.toFixed(1)}`; } return d + ` L ${X(zmax).toFixed(1)} ${base} Z`; };
       const lo = p.invert ? zc : zmin, hi = p.invert ? zmax : zc;
-      let f = `M ${X(lo).toFixed(1)} ${base}`; for (let z = lo; z <= hi + 1e-9; z += 0.1) f += ` L ${X(z).toFixed(1)} ${Y(z).toFixed(1)}`; f += ` L ${X(hi).toFixed(1)} ${base} Z`;
-      const ticks = [-2, -1, 0, 1, 2].map(z => `<line x1="${X(z).toFixed(1)}" x2="${X(z).toFixed(1)}" y1="${base}" y2="${base + 4}" stroke="var(--line)"/>`).join("");
+      let f = `M ${X(lo).toFixed(1)} ${base}`; for (let z = lo; z <= hi + 1e-9; z += 0.08) f += ` L ${X(z).toFixed(1)} ${Y(z).toFixed(1)}`; f += ` L ${X(hi).toFixed(1)} ${base} Z`;
+      const m = MR[p.key]; let modelPath = "", modelLine = "", modelNote = "";
+      if (m) {
+        const mu = (m[0] - p.mean) / p.sd, sg = m[1] / p.sd;
+        modelPath = `<path d="${bell(mu, sg)}" fill="rgba(255,138,77,.14)" stroke="#FF8A4D" stroke-width="1.5" stroke-dasharray="5 3"/>`;
+        modelLine = `<line x1="${X(mu).toFixed(1)}" x2="${X(mu).toFixed(1)}" y1="${(base - (base - top)).toFixed(1)}" y2="${base}" stroke="#FF8A4D" stroke-dasharray="2 3" opacity=".7"/>`;
+        const zm = (p.value - m[0]) / m[1]; const cdfm = BF.normCdf(zm); const topM = (p.invert ? cdfm : 1 - cdfm) * 100;
+        modelNote = `모델 기준 ${topM <= 50 ? "상위 " + Math.max(0.1, topM).toFixed(0) : "하위 " + Math.max(0.1, 100 - topM).toFixed(0)}%`;
+      }
+      const ticks = [-3, -2, -1, 0, 1, 2, 3].map(z => `<line x1="${X(z).toFixed(1)}" x2="${X(z).toFixed(1)}" y1="${base}" y2="${base + 4}" stroke="var(--line)"/>`).join("");
       const unit = p.unit === "%" ? "%" : p.unit ? " " + p.unit : "";
-      const fmt = v => p.unit === "" ? v.toFixed(2) : v.toFixed(1);
-      const rank = p.topPct <= 50 ? `<small>상위</small>${p.topPct.toFixed(0)}%` : `<small>하위</small>${p.pct.toFixed(0)}%`;
+      const fmt = v => p.unit === "" ? v.toFixed(1) : v.toFixed(1);
+      const rank = p.topPct <= 50 ? `<small>또래 상위</small>${p.topPct.toFixed(0)}%` : `<small>또래 하위</small>${p.pct.toFixed(0)}%`;
       const el = document.createElement("div"); el.className = "curve";
-      el.innerHTML = `<div class="ch"><b>${p.name}</b><span class="rk">${rank}</span></div>
-        <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${p.name} 또래 분포에서 내 위치">
-          <path d="${d}" fill="rgba(255,255,255,.06)" stroke="var(--line)" stroke-width="1"/>
-          <path d="${f}" fill="rgba(109,149,242,.35)"/>
+      el.innerHTML = `<div class="ch"><b>${p.name}</b><span class="rk">${rank}${modelNote ? `<em>${modelNote}</em>` : ""}</span></div>
+        <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${p.name} 분포에서 내 위치">
+          <path d="${bell(0, 1)}" fill="rgba(109,149,242,.10)" stroke="rgba(109,149,242,.9)" stroke-width="1.5"/>
+          <path d="${f}" fill="rgba(109,149,242,.28)"/>
+          ${modelPath}${modelLine}
           <line x1="${X(0).toFixed(1)}" x2="${X(0).toFixed(1)}" y1="${top}" y2="${base}" stroke="var(--muted)" stroke-dasharray="3 3"/>
           <line x1="${padL}" x2="${W - padR}" y1="${base}" y2="${base}" stroke="var(--line)"/>${ticks}
-          <line x1="${X(zc).toFixed(1)}" x2="${X(zc).toFixed(1)}" y1="${Y(zc).toFixed(1)}" y2="${base}" stroke="#FF8A4D" stroke-width="2"/>
-          <circle cx="${X(zc).toFixed(1)}" cy="${Y(zc).toFixed(1)}" r="5" fill="#FF8A4D" stroke="#0F1114" stroke-width="2"/>
-          <text x="${X(0).toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="11" fill="var(--muted)">평균 ${fmt(p.mean)}${unit}</text>
-          <text x="${X(zc).toFixed(1)}" y="${Math.max(10, Y(zc) - 10).toFixed(1)}" text-anchor="middle" font-size="12" font-weight="700" fill="#FF8A4D">나 ${fmt(p.value)}${unit}</text>
+          <line x1="${X(zc).toFixed(1)}" x2="${X(zc).toFixed(1)}" y1="${Y(zc).toFixed(1)}" y2="${base}" stroke="#fff" stroke-width="2"/>
+          <circle cx="${X(zc).toFixed(1)}" cy="${Y(zc).toFixed(1)}" r="5.5" fill="#fff" stroke="#0F1114" stroke-width="2"/>
+          <text x="${X(0).toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="11" fill="rgba(109,149,242,.95)">또래 평균 ${fmt(p.mean)}${unit}</text>
+          ${m ? `<text x="${X((m[0] - p.mean) / p.sd).toFixed(1)}" y="${top - 2}" text-anchor="middle" font-size="11" fill="#FF8A4D">모델 평균 ${fmt(m[0])}${unit}</text>` : ""}
+          <text x="${(X(zc) + (zc >= 0 ? 9 : -9)).toFixed(1)}" y="${Math.max(24, Y(zc) - 6).toFixed(1)}" text-anchor="${zc >= 0 ? "start" : "end"}" font-size="12" font-weight="700" fill="#fff">나 ${fmt(p.value)}${unit}</text>
         </svg>
         <div class="cf"><span>${p.invert ? p.hiLabel : p.loLabel}</span><span>${p.invert ? p.loLabel : p.hiLabel}</span></div>`;
       box.appendChild(el);
     });
+    const src = document.createElement("div"); src.className = "note csrc"; src.textContent = `모델 분포 출처: ${BF.MODEL_SRC} · 인물 ${BF.MODEL_REF.M.n + BF.MODEL_REF.F.n}명`; box.appendChild(src);
   }
+
+  /* ---------- 연구 기록 (참여자 데이터 수집) ---------- */
+  const RK = "tv.records";
+  const loadRecords = () => { try { return JSON.parse(localStorage.getItem(RK) || "[]"); } catch (e) { return []; } };
+  const saveRecords = list => { try { localStorage.setItem(RK, JSON.stringify(list)); } catch (e) { } };
+  function renderRecords() { const n = loadRecords().length; const c = $("recCount"); if (c) c.textContent = n ? `${n}건 저장됨` : "저장된 기록이 없어요"; const e = $("recExport"); if (e) e.disabled = !n; }
+  const REC_COLS = ["id", "label", "sex", "age", "height", "weight", "bmi", "shoulder", "waist", "leg", "height_top", "weight_top", "bmi_top", "shoulder_top", "waist_top", "leg_top", "scale", "placeMode", "group", "saved_at"];
+  function addRecord() {
+    const v = currentValues(); const spec = BF.spectrum(v, group());
+    if (!v.height) { toast("키가 있어야 기록할 수 있어요", 2000); return; }
+    const top = k => { const p = spec.find(x => x.key === k); return p ? +p.topPct.toFixed(1) : ""; };
+    const list = loadRecords();
+    const r = { id: "P" + String(list.length + 1).padStart(3, "0"), label: ($("recLabel").value || "").trim(), sex: S.sex, age: $("ageIn").value || "", height: v.height || "", weight: v.weight || "",
+      bmi: v.weight && v.height ? +(v.weight / (v.height / 100) ** 2).toFixed(1) : "", shoulder: v.shoulder ? +v.shoulder.toFixed(1) : "", waist: v.waist ? +v.waist.toFixed(1) : "", leg: v.leg ? +v.leg.toFixed(1) : "",
+      height_top: top("height"), weight_top: top("weight"), bmi_top: top("bmi"), shoulder_top: top("shoulder"), waist_top: top("waist"), leg_top: top("leg"),
+      scale: S.est?.scaleSource || "", placeMode: S.placeMode || "", group: group(), saved_at: new Date().toISOString().slice(0, 19).replace("T", " ") };
+    list.push(r); saveRecords(list); renderRecords(); $("recLabel").value = ""; toast(`${r.id} 저장했어요`, 1500);
+  }
+  function exportRecords() {
+    const list = loadRecords(); if (!list.length) return;
+    const esc = x => { const s = String(x ?? ""); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    const csv = "﻿" + REC_COLS.join(",") + "\n" + list.map(r => REC_COLS.map(k => esc(r[k])).join(",")).join("\n");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })); a.download = `teamvibe_records_${new Date().toISOString().slice(0, 10)}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+  $("recSave").addEventListener("click", addRecord);
+  $("recExport").addEventListener("click", exportRecords);
+  $("recClear").addEventListener("click", () => { if (!confirm("저장된 연구 기록을 모두 지울까요?")) return; saveRecords([]); renderRecords(); });
+  $("recLabel").addEventListener("keydown", e => { if (e.key === "Enter") addRecord(); });
+  renderRecords();
+
   function renderSpec(spec) {
     renderCurves(spec);
     const box = $("spec"); box.innerHTML = "";
