@@ -131,7 +131,43 @@
     const t = pos / 100; const [a, b, u] = t < .5 ? [lo, mid, t / .5] : [mid, hi, (t - .5) / .5];
     return `rgb(${Math.round(lerp(a[0], b[0], u))},${Math.round(lerp(a[1], b[1], u))},${Math.round(lerp(a[2], b[2], u))})`;
   }
+  /* 정규분포 곡선: 또래 평균·표준편차로 종 모양 곡선을 그리고 내 위치를 표시 */
+  const CURVE_KEYS = ["height", "legRatio", "swr"];
+  function renderCurves(spec) {
+    const box = $("curves"); if (!box) return; box.innerHTML = "";
+    const items = CURVE_KEYS.map(k => spec.find(p => p.key === k)).filter(Boolean);
+    if (!items.length) { box.innerHTML = '<div class="empty">키와 치수가 있으면 또래 분포가 표시됩니다</div>'; return; }
+    items.forEach(p => {
+      const W = 520, H = 130, padL = 10, padR = 10, base = H - 24, top = 16;
+      const zmin = -3.2, zmax = 3.2; const X = z => padL + (z - zmin) / (zmax - zmin) * (W - padL - padR);
+      const pdf = z => Math.exp(-0.5 * z * z); const Y = z => base - pdf(z) * (base - top);
+      const zc = Math.max(zmin, Math.min(zmax, p.z));
+      let d = `M ${X(zmin).toFixed(1)} ${base}`; for (let z = zmin; z <= zmax + 1e-9; z += 0.1) d += ` L ${X(z).toFixed(1)} ${Y(z).toFixed(1)}`; d += ` L ${X(zmax).toFixed(1)} ${base} Z`;
+      // 내 위치 기준 "나보다 아래" 영역 채우기 (상위 % 영역은 밝게)
+      const lo = p.invert ? zc : zmin, hi = p.invert ? zmax : zc;
+      let f = `M ${X(lo).toFixed(1)} ${base}`; for (let z = lo; z <= hi + 1e-9; z += 0.1) f += ` L ${X(z).toFixed(1)} ${Y(z).toFixed(1)}`; f += ` L ${X(hi).toFixed(1)} ${base} Z`;
+      const ticks = [-2, -1, 0, 1, 2].map(z => `<line x1="${X(z).toFixed(1)}" x2="${X(z).toFixed(1)}" y1="${base}" y2="${base + 4}" stroke="var(--line)"/>`).join("");
+      const unit = p.unit === "%" ? "%" : p.unit ? " " + p.unit : "";
+      const fmt = v => p.unit === "" ? v.toFixed(2) : v.toFixed(1);
+      const rank = p.topPct <= 50 ? `<small>상위</small>${p.topPct.toFixed(0)}%` : `<small>하위</small>${p.pct.toFixed(0)}%`;
+      const el = document.createElement("div"); el.className = "curve";
+      el.innerHTML = `<div class="ch"><b>${p.name}</b><span class="rk">${rank}</span></div>
+        <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${p.name} 또래 분포에서 내 위치">
+          <path d="${d}" fill="rgba(255,255,255,.06)" stroke="var(--line)" stroke-width="1"/>
+          <path d="${f}" fill="rgba(109,149,242,.35)"/>
+          <line x1="${X(0).toFixed(1)}" x2="${X(0).toFixed(1)}" y1="${top}" y2="${base}" stroke="var(--muted)" stroke-dasharray="3 3"/>
+          <line x1="${padL}" x2="${W - padR}" y1="${base}" y2="${base}" stroke="var(--line)"/>${ticks}
+          <line x1="${X(zc).toFixed(1)}" x2="${X(zc).toFixed(1)}" y1="${Y(zc).toFixed(1)}" y2="${base}" stroke="#FF8A4D" stroke-width="2"/>
+          <circle cx="${X(zc).toFixed(1)}" cy="${Y(zc).toFixed(1)}" r="5" fill="#FF8A4D" stroke="#0F1114" stroke-width="2"/>
+          <text x="${X(0).toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="11" fill="var(--muted)">평균 ${fmt(p.mean)}${unit}</text>
+          <text x="${X(zc).toFixed(1)}" y="${Math.max(10, Y(zc) - 10).toFixed(1)}" text-anchor="middle" font-size="12" font-weight="700" fill="#FF8A4D">나 ${fmt(p.value)}${unit}</text>
+        </svg>
+        <div class="cf"><span>${p.invert ? p.hiLabel : p.loLabel}</span><span>σ ${fmt(p.sd)} · z ${p.z >= 0 ? "+" : ""}${p.z.toFixed(2)}</span><span>${p.invert ? p.loLabel : p.hiLabel}</span></div>`;
+      box.appendChild(el);
+    });
+  }
   function renderSpec(spec) {
+    renderCurves(spec);
     const box = $("spec"); box.innerHTML = "";
     if (!spec.length) { box.innerHTML = '<div class="empty">키와 치수가 있으면 스펙트럼이 표시됩니다</div>'; return; }
     spec.forEach(p => {

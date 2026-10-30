@@ -558,3 +558,15 @@ details.more summary { cursor: pointer; color: var(--accent); font-size: 13px; f
 .cmp-grid svg { display: block; width: 100%; aspect-ratio: 320 / 420; }
 .cmp-grid figcaption { background: var(--panel-2); color: var(--ink); font-size: 13px; padding: 10px 12px; line-height: 1.5; }
 .cmp-grid figcaption b { display: block; color: var(--accent); margin-bottom: 4px; }
+
+/* ---------- 정규분포 곡선 ---------- */
+.curves { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 18px; }
+@media (max-width: 640px) { .curves { grid-template-columns: 1fr; } }
+.curve { background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 12px; padding: 12px 12px 8px; }
+.curve .ch { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+.curve .ch b { font-size: 15px; }
+.curve .ch .rk { font-family: var(--display); font-weight: 800; font-size: 18px; letter-spacing: -.02em; }
+.curve .ch .rk small { font-family: var(--sans); font-size: 12px; font-weight: 600; color: var(--muted); margin-right: 3px; }
+.curve svg { display: block; width: 100%; height: auto; }
+.curve .cf { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 2px; }
+.curve .cf b { color: var(--ink-2); font-weight: 600; }
