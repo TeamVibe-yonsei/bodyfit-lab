@@ -2,13 +2,13 @@
 (function () {
   "use strict";
   const $ = id => document.getElementById(id) || Object.assign(document.createElement("div"), { id });
-  const S = { sex: "M", age: "20", manual: {}, est: {}, sample: false, diagnosed: false, garments: [], sel: null, guides: true, photoLoaded: false, tab: "reco", editing: null, lastType: null, aiResult: null, placeMode: "none", showBasis: false };
+  const S = { sex: "M", age: "20", manual: {}, est: {}, sample: false, diagnosed: false, photoLoaded: false, editing: null, lastType: null, placeMode: "none", showBasis: false };
   const SAMPLE = { shoulder: 42.5, waist: 27.4, leg: 81.0 };
 
   /* ---------- 저장/복원 ---------- */
   const LS = "bodyfit.v4";
-  const save = () => { try { localStorage.setItem(LS, JSON.stringify({ sex: S.sex, ageIn: $("ageIn").value, height: $("height").value, weight: $("weight").value, chestIn: $("chestIn").value, waistCIn: $("waistCIn").value, manual: S.manual, guides: S.guides })); } catch (e) { } };
-  const load = () => { try { const d = JSON.parse(localStorage.getItem(LS) || "null"); if (!d) return; S.sex = d.sex || "M"; S.manual = d.manual || {}; S.guides = d.guides ?? true; if (d.ageIn) $("ageIn").value = d.ageIn; if (d.height) $("height").value = d.height; if (d.weight) $("weight").value = d.weight; if (d.chestIn) $("chestIn").value = d.chestIn; if (d.waistCIn) $("waistCIn").value = d.waistCIn; if (d.chestIn || d.waistCIn) $("moreIn").open = true; } catch (e) { } };
+  const save = () => { try { localStorage.setItem(LS, JSON.stringify({ sex: S.sex, ageIn: $("ageIn").value, height: $("height").value, weight: $("weight").value, chestIn: $("chestIn").value, waistCIn: $("waistCIn").value, manual: S.manual})); } catch (e) { } };
+  const load = () => { try { const d = JSON.parse(localStorage.getItem(LS) || "null"); if (!d) return; S.sex = d.sex || "M"; S.manual = d.manual || {}; if (d.ageIn) $("ageIn").value = d.ageIn; if (d.height) $("height").value = d.height; if (d.weight) $("weight").value = d.weight; if (d.chestIn) $("chestIn").value = d.chestIn; if (d.waistCIn) $("waistCIn").value = d.waistCIn; if (d.chestIn || d.waistCIn) $("moreIn").open = true; } catch (e) { } };
 
   /* ---------- 테마 ---------- */
 
@@ -19,7 +19,6 @@
   $("ageIn").addEventListener("input", () => update());
   $("height").addEventListener("input", () => update()); $("weight").addEventListener("input", () => update()); $("chestIn").addEventListener("input", () => update()); $("waistCIn").addEventListener("input", () => update());
 
-  $("legend2").innerHTML = BF.POINTS.map(p => `<span><b>${p.n}</b>${p.label}</span>`).join("");
 
   /* ---------- 스테이지 ---------- */
   const stage = new BF.Stage($("cv"), () => update());
@@ -78,8 +77,7 @@
   function diagnose() {
     if (!(parseFloat($("height").value) > 0) && !(S.est.scaleSource === "card" && S.est.height)) { setStatus("키를 입력하거나 카드 정밀 측정을 켜 주세요", "err"); $("height").focus(); return; }
     S.diagnosed = true;
-    ["s2", "s3", "s4"].forEach((id, i) => { const el = $(id); el.classList.remove("locked"); el.classList.add("reveal"); el.style.animationDelay = (i * 0.12) + "s"; });
-    const rep = document.querySelector(".report"); rep.classList.remove("locked"); rep.classList.add("reveal"); rep.style.animationDelay = ".4s";
+    ["s2", "s3"].forEach((id, i) => { const el = $(id); el.classList.remove("locked"); el.classList.add("reveal"); el.style.animationDelay = (i * 0.12) + "s"; });
     update();
     $("s2").scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -162,7 +160,7 @@
           <text x="${X(0).toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="11" fill="var(--muted)">평균 ${fmt(p.mean)}${unit}</text>
           <text x="${X(zc).toFixed(1)}" y="${Math.max(10, Y(zc) - 10).toFixed(1)}" text-anchor="middle" font-size="12" font-weight="700" fill="#FF8A4D">나 ${fmt(p.value)}${unit}</text>
         </svg>
-        <div class="cf"><span>${p.invert ? p.hiLabel : p.loLabel}</span><span>σ ${fmt(p.sd)} · z ${p.z >= 0 ? "+" : ""}${p.z.toFixed(2)}</span><span>${p.invert ? p.loLabel : p.hiLabel}</span></div>`;
+        <div class="cf"><span>${p.invert ? p.hiLabel : p.loLabel}</span><span>${p.invert ? p.loLabel : p.hiLabel}</span></div>`;
       box.appendChild(el);
     });
   }
@@ -225,169 +223,9 @@
     $("refTable").innerHTML = h + "</tbody></table>";
   }
   $("refSex").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; refSex = b.dataset.v; renderRef(); });
-  /* ---------- 피팅룸: 옷장 ---------- */
-  const KIND_TITLE = { top: "상의", outer: "아우터", bottom: "하의", shoes: "신발", mine: "내 옷" };
-  function renderWardrobe() {
-    const g = $("wgrid"); g.innerHTML = "";
-    let items, why = {};
-    if (S.tab === "reco") {
-      const m = S.lastType ? BF.recoMatch(S.lastType.recommendations, BF.CATALOG.concat(S.garments.filter(x => x.mine))) : [];
-      items = m.map(o => o.item); m.forEach(o => { why[o.item.id] = o.phrase; });
-      if (!items.length) g.innerHTML = '<div class="fr-empty" style="flex:1">STEP 1에서 진단하면 체형에 어울리는 옷이 여기에 모입니다</div>';
-    } else if (S.tab === "looks") { renderLooks(g); return; }
-    else items = S.tab === "mine" ? S.garments.filter(x => x.mine) : BF.CATALOG.filter(c => c.kind === S.tab);
-    if (S.tab === "mine" && !items.length) { g.innerHTML = '<div class="fr-empty" style="flex:1">오른쪽 "내 옷 사진 추가"로 상품 컷을 올리면 여기에 보관됩니다</div>'; }
-    items.forEach(it => {
-      const worn = S.garments.some(x => x.catId === it.id || x.id === it.id);
-      const el = document.createElement("div"); el.className = "pcard" + (worn ? " on" : "") + (why[it.id] ? " rec" : "");
-      el.innerHTML = `${worn ? '<span class="pon">착용 중</span>' : ""}<div class="pimg"><img src="${it.url}" alt="${it.name}"></div><div class="pn">${it.name}</div><div class="pm">${why[it.id] ? `<span class="ok">✓ ${why[it.id]}</span>` : (it.fit || BF.KIND_LABEL[it.kind])}</div>`;
-      el.addEventListener("click", () => (it.mine ? selectGarment(it.id) : (worn ? unwear(it) : wearCatalog(it))));
-      g.appendChild(el);
-    });
-  }
-  function unwear(it) { S.garments = S.garments.filter(x => x.catId !== it.id); S.sel = S.garments[0]?.id || null; renderAll(); }
-  $("wtabs").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; S.tab = b.dataset.k; [...$("wtabs").children].forEach(x => x.classList.toggle("on", x === b)); renderWardrobe(); });
+  const toast = (t, ms = 0) => { let d = $("tvToast"); if (!d || !d.parentElement) { d = document.createElement("div"); d.id = "tvToast"; d.className = "tv-toast"; document.body.appendChild(d); } d.textContent = t; d.hidden = !t; if (ms) setTimeout(() => { d.hidden = true; }, ms); };
 
-  function defaultSize(kind, values) {
-    const keys = BF.sizeKeys(kind); const table = BF.SIZES[kind === "dress" ? "top" : kind];
-    let target;
-    const f = S.sex === "F";
-    if (kind === "top" || kind === "dress") target = (values.shoulder || (f ? 36 : 40)) + 3.5;
-    else if (kind === "outer") target = (values.shoulder || (f ? 36 : 40)) + 6;
-    else if (kind === "bottom") target = (values.waist || (f ? 25 : 28)) * 1.30; // 허리 정면폭 → 의류 허리 반폭 근사(여유 포함)
-    else target = f ? 23.5 : 26;
-    return keys.reduce((best, k) => Math.abs(table[k] - target) < Math.abs(table[best] - target) ? k : best, keys[0]);
-  }
-  function wearCatalog(it) {
-    // 같은 부위(상의/아우터/하의/신발)는 하나만: 교체
-    S.garments = S.garments.filter(x => !(x.kind === it.kind && !x.mine));
-    const values = currentValues(); const size = defaultSize(it.kind, values);
-    const gm = { id: "g" + Date.now(), catId: it.id, name: it.name, kind: it.kind, url: it.url, w: it.w, h: it.h, refFrac: it.refFrac, size, sizeCm: BF.SIZES[it.kind][size], scale: 1, ys: 1, dx: 0, dy: 0, fit: it.fit, color: it.color, draw: it.draw };
-    S.garments.push(gm); S.sel = gm.id; renderAll();
-  }
-  function selectGarment(id) { S.sel = id; renderWorn(); }
-  const toast = (t, ms = 0) => { let d = $("tvToast"); if (!d.parentElement) { d = document.createElement("div"); d.id = "tvToast"; d.className = "tv-toast"; document.body.appendChild(d); } d.textContent = t; d.hidden = !t; if (ms) setTimeout(() => { d.hidden = true; }, ms); };
-  $("garment").addEventListener("change", async e => {
-    const files = [...e.target.files]; e.target.value = "";
-    for (const f of files) {
-      const img = await new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = URL.createObjectURL(f); });
-      if (!img) continue;
-      const kindTab = ["top", "outer", "bottom", "shoes"].includes(S.tab) ? S.tab : "top";
-      const gm = { id: "g" + Date.now() + Math.random().toString(16).slice(2, 5), mine: true, name: f.name.replace(/\.[^.]+$/, ""), kind: kindTab, src: img, thr: 34, scale: 1, ys: 1, dx: 0, dy: 0 };
-      // Gemini 키가 있으면: 캡처에서 옷만 추출해 상품컷으로 정리 + 종류 자동 판별
-      if (!BF.ai.key()) { toast("먼저 Gemini API 키를 넣어 주세요", 2500); return; }
-      {
-        try {
-          toast("AI가 옷을 읽는 중… (10~20초)");
-          const b64 = await BF.ai.toPng(img.src, 1024);
-          const ex = await BF.ai.extractGarment({ b64, key: BF.ai.key() });
-          const clean = await new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = ex.url; });
-          if (clean) { gm.src = clean; gm.rawSrc = img; if (ex.kind) gm.kind = ex.kind; if (ex.name) gm.name = ex.name; gm.aiClean = true; }
-          toast("");
-        } catch (err) { toast("AI 추출 실패: " + (err.message || err) + " — 원본 그대로 사용", 4000); }
-      }
-      Object.assign(gm, BF.removeBackground(gm.src, gm.thr));
-      S.garments.push(gm); S.sel = gm.id; S.tab = "mine";
-      [...$("wtabs").children].forEach(x => x.classList.toggle("on", x.dataset.k === "mine")); renderAll();
-    }
-  });
-  function fitBadge(gm, values) {
-    if (!gm.sizeCm) return "";
-    if (gm.kind === "top" || gm.kind === "outer" || gm.kind === "dress") {
-      const ease = gm.sizeCm - (values.shoulder || 0); if (!values.shoulder) return "";
-      const [t, cls] = ease < 1.5 ? ["타이트", "tight"] : ease < 3 ? ["슬림핏", ""] : ease < 5 ? ["레귤러핏", ""] : ease < 7.5 ? ["세미오버", "loose"] : ["오버핏", "loose"];
-      return `<span class="fitbadge ${cls}">${t} · 어깨 여유 ${ease >= 0 ? "+" : ""}${ease.toFixed(1)}cm</span>`;
-    }
-    if (gm.kind === "bottom") {
-      const ease = gm.sizeCm - (values.waist || 0) * 1.25; if (!values.waist) return "";
-      const [t, cls] = ease < 0 ? ["꽉 맞음", "tight"] : ease < 2.5 ? ["딱 맞음", ""] : ease < 5 ? ["여유 있음", "loose"] : ["헐렁함", "loose"];
-      return `<span class="fitbadge ${cls}">${t}</span>`;
-    }
-    return "";
-  }
-  function renderWorn() {
-    const L = $("wlist"); const values = currentValues();
-    const panel = document.querySelector(".fr-outfit"); if (panel) panel.hidden = !S.garments.length;
-    if (!S.garments.length) { L.innerHTML = ""; $("gctrl").hidden = true; return; }
-    const order = S.garments.slice().sort((a, b) => BF.KIND_ORDER[b.kind] - BF.KIND_ORDER[a.kind]);
-    L.innerHTML = order.map(g => `<div class="wl ${S.sel === g.id ? "sel" : ""}" data-id="${g.id}"><img src="${g.url}" alt=""><div><div class="wn">${g.name} <small style="color:var(--muted);font-weight:400">${BF.KIND_LABEL[g.kind]}</small></div>
-      <div class="fitline">${g.refFrac ? `<div class="sizechips" data-size="${g.id}">${BF.sizeKeys(g.kind).map(k => `<button data-k="${k}" class="${k == g.size ? "on" : ""}">${k}</button>`).join("")}</div>` : `<select data-kind="${g.id}">${Object.entries(BF.KIND_LABEL).map(([k, v]) => `<option value="${k}" ${k === g.kind ? "selected" : ""}>${v}</option>`).join("")}</select>`}</div>
-      <div class="fitline">${fitBadge(g, values)}</div></div></div>`).join("");
-    L.querySelectorAll(".wl").forEach(el => el.addEventListener("click", e => { if (e.target.closest("select,button")) return; selectGarment(el.dataset.id); }));
-    L.querySelectorAll(".sizechips button").forEach(btn => btn.addEventListener("click", () => { const id = btn.parentElement.dataset.size; const g = S.garments.find(x => x.id === id); g.size = btn.dataset.k; g.sizeCm = BF.SIZES[g.kind][btn.dataset.k]; g.sizeLocked = true; S.sel = id; renderWorn(); renderAvatar(values); }));
-    L.querySelectorAll("select[data-kind]").forEach(sel => sel.addEventListener("change", () => { const g = S.garments.find(x => x.id === sel.dataset.kind); g.kind = sel.value; g.dx = g.dy = 0; renderAll(); }));
-    const g = S.garments.find(x => x.id === S.sel); $("gctrl").hidden = !g;
-  }
-  function syncCtrl() { }
-  $("gdel").addEventListener("click", () => { S.garments = S.garments.filter(x => x.id !== S.sel); S.sel = S.garments[0]?.id || null; renderAll(); });
-
-  /* ---------- 아바타(치수 기하만 계산; 화면은 AI 실사 스테이지) ---------- */
-  let geo = null, fitB = null;
-  const fitSvg = $("fitSvg");
-  function renderAvatar(values) {
-    geo = BF.avatarGeometry(values, S.sex);
-    fitB = BF.fitBody(BF.mannKey(S.sex, S.lastType?.frame), values);
-    fitSvg.innerHTML = BF.fitRender(fitB, S.garments, { guides: S.guides && S.garments.length, sel: S.sel });
-    // 코디가 바뀌면 이전 실사 결과는 더 이상 현재 코디가 아님 → 미리보기로 복귀
-    if (S.aiResult && S.aiSig !== aiSig()) { $("viewAiBtn").hidden = true; setView("fit"); }
-  }
-  // 업로드 옷 드래그·휠 (미리보기)
-  let fdrag = null;
-  const fPos = e => { const pt = fitSvg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; return pt.matrixTransform(fitSvg.getScreenCTM().inverse()); };
-  fitSvg.addEventListener("pointerdown", e => { const g = e.target.closest("g.garment"); if (!g) return; const gm = S.garments.find(x => x.id === g.dataset.id); if (!gm || !(gm.mine || gm.kind === "shoes")) return; S.sel = gm.id; const q = fPos(e); fdrag = { gm, sx: q.x - (gm.dx || 0), sy: q.y - (gm.dy || 0) }; fitSvg.setPointerCapture(e.pointerId); renderWorn(); renderAvatar(currentValues()); e.preventDefault(); });
-  fitSvg.addEventListener("pointermove", e => { if (!fdrag) return; const q = fPos(e); fdrag.gm.dx = q.x - fdrag.sx; fdrag.gm.dy = q.y - fdrag.sy; renderAvatar(currentValues()); });
-  fitSvg.addEventListener("pointerup", () => { fdrag = null; });
-  fitSvg.addEventListener("wheel", e => { const g = e.target.closest("g.garment"); if (!g) return; const gm = S.garments.find(x => x.id === g.dataset.id); if (!gm || !(gm.mine || gm.kind === "shoes")) return; e.preventDefault(); gm.scale = Math.max(.5, Math.min(2, (gm.scale || 1) * (e.deltaY < 0 ? 1.04 : 0.96))); renderAvatar(currentValues()); }, { passive: false });
-  $("guideBtn").addEventListener("click", () => { S.guides = !S.guides; $("guideBtn").classList.toggle("on", S.guides); save(); renderAvatar(currentValues()); });
-  function setView(v) { S.view = v; [...$("viewSeg").children].forEach(b => b.classList.toggle("on", b.dataset.v === v)); $("aiView").hidden = v !== "ai"; fitSvg.style.visibility = v === "ai" ? "hidden" : "visible"; $("viewSeg").hidden = $("viewAiBtn").hidden; }
-  $("viewSeg").addEventListener("click", e => { const b = e.target.closest("button"); if (b && !b.hidden) setView(b.dataset.v); });
-  async function fitPng(w = 640, h = 840) { return await svgToPng(fitSvg, w, h, "rgba(0,0,0,0)"); }
-  function mannUrl() { return BF.mannUrl(BF.mannKey(S.sex, S.lastType?.frame)); }
-  async function mannB64() { return await BF.ai.toPng(mannUrl(), 1024); }
-  async function previewB64() { const c = await fitPng(768, 1008); return c.toDataURL("image/png").split(",")[1]; }
-  const download = (canvas, name) => { const a = document.createElement("a"); a.download = name; a.href = canvas.toDataURL("image/png"); a.click(); };
-  function svgToPng(svgEl, w, h, bg) {
-    return new Promise(resolve => {
-      const clone = svgEl.cloneNode(true); clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-      const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(clone)], { type: "image/svg+xml" })); const img = new Image();
-      img.onload = () => { const c = document.createElement("canvas"); c.width = w; c.height = h; const x = c.getContext("2d"); x.fillStyle = bg; x.fillRect(0, 0, w, h); x.drawImage(img, 0, 0, w, h); URL.revokeObjectURL(url); resolve(c); };
-      img.src = url;
-    });
-  }
-  $("dlBtn").addEventListener("click", async () => { if (S.view === "ai" && S.aiResult) { const a = document.createElement("a"); a.download = "teamvibe_tryon.png"; a.href = S.aiResult; a.click(); return; } const c = await svgToPng(fitSvg, 960, 1260, "#0F1114"); download(c, "teamvibe_fit.png"); });
-  $("shareBtn").addEventListener("click", async () => {
-    const values = currentValues(); const spec = BF.spectrum(values, group()); const c = BF.classify(spec, values, S.sex);
-    const W = 1080, H = 1350; const cv = document.createElement("canvas"); cv.width = W; cv.height = H; const x = cv.getContext("2d");
-    x.fillStyle = "#F3F5F8"; x.fillRect(0, 0, W, H);
-    x.fillStyle = "#16191F"; x.font = "800 44px Manrope, 'Noto Sans KR', sans-serif"; x.fillText("Team Vibe", 60, 90);
-    x.fillStyle = "#6B7480"; x.font = "500 20px 'Noto Sans KR', sans-serif"; x.fillText(new Date().toLocaleDateString("ko-KR"), 60, 124);
-    x.fillStyle = "#2F5FD9"; x.font = "700 34px 'Noto Sans KR', sans-serif"; x.fillText(c ? c.label : "치수 입력 필요", 60, 190);
-    let y = 250;
-    spec.forEach(p => {
-      x.fillStyle = "#16191F"; x.font = "600 22px 'Noto Sans KR', sans-serif"; x.fillText(p.name, 60, y);
-      x.fillStyle = "#3D444D"; x.font = "500 20px 'JetBrains Mono', monospace"; x.textAlign = "right";
-      x.fillText(`${p.unit === "" ? p.value.toFixed(2) : p.value.toFixed(1)}${p.unit === "%" ? "%" : p.unit ? p.unit : ""} · 상위 ${p.topPct.toFixed(1)}%`, W - 60, y); x.textAlign = "left";
-      const bx = 60, bw = W - 120, by = y + 16;
-      const grad = x.createLinearGradient(bx, 0, bx + bw, 0); grad.addColorStop(0, "#BFD4F2"); grad.addColorStop(.5, "#E9ECEF"); grad.addColorStop(1, "#F2CDBA");
-      x.fillStyle = grad; x.beginPath(); x.roundRect(bx, by, bw, 16, 8); x.fill();
-      x.fillStyle = "#6B7480"; x.fillRect(bx + bw / 2 - 1, by - 4, 2, 24);
-      x.fillStyle = "#E0653B"; x.beginPath(); x.arc(bx + bw * (p.invert ? 100 - p.pos : p.pos) / 100, by + 8, 13, 0, Math.PI * 2); x.fill(); x.strokeStyle = "#fff"; x.lineWidth = 3; x.stroke();
-      y += 82;
-    });
-    if (c) { y += 10; x.fillStyle = "#16191F"; x.font = "600 22px 'Noto Sans KR', sans-serif"; x.fillText("추천 스타일", 60, y); y += 34; x.font = "400 19px 'Noto Sans KR', sans-serif";
-      c.recommendations.forEach(r => { x.fillStyle = "#2F5FD9"; x.fillText(r.part, 60, y); x.fillStyle = "#3D444D"; x.fillText(r.good.slice(0, 2).join(" · "), 200, y); y += 32; }); }
-    download(cv, "teamvibe_result.png");
-  });
-
-  /* ---------- AI 실사 착용 (Gemini) — 키 게이트 + 옷을 고르면 자동 생성 ---------- */
-  async function garmentPngs() {
-    const order = S.garments.slice().sort((a, b) => BF.KIND_ORDER[a.kind] - BF.KIND_ORDER[b.kind]);
-    const out = [];
-    for (const g of order) out.push({ name: g.name, kind: BF.KIND_LABEL[g.kind] || g.kind, size: g.size, b64: await BF.ai.toPng(g.mine && g.src ? g.src.src : g.url, 768) });
-    return out;
-  }
-  const aiCache = new Map(); let aiTimer = null, aiBusy = false, aiDirty = false;
-  function aiSig() { return BF.mannKey(S.sex, S.lastType?.frame) + "|" + S.garments.slice().sort((a, b) => BF.KIND_ORDER[a.kind] - BF.KIND_ORDER[b.kind]).map(g => g.id + ":" + (g.size || "")).join(","); }
+  /* ---------- AI 연결(Gemini 키) ---------- */
   function renderGate() {
     const has = !!BF.ai.key();
     $("keyBtn").hidden = !has; $("keyBody").hidden = has; $("keyState").textContent = has ? "연결됨" : "키 없음"; $("keyState").classList.toggle("on", has);
@@ -396,152 +234,22 @@
   $("gateGo").addEventListener("click", () => { const k = $("gateKey").value.trim(); if (k.length < 20 || /\s/.test(k)) { $("gateErr").textContent = "키 전체를 그대로 붙여 넣어 주세요 (AIza… 또는 AQ.… 로 시작하는 긴 문자열)"; $("gateErr").hidden = false; return; } BF.ai.setKey(k); $("gateKey").value = ""; $("gateErr").hidden = true; renderGate(); toast("AI 연결됨", 1500); if (stage.img && S.placeMode !== "manual") aiPlace(); });
   $("gateKey").addEventListener("keydown", e => { if (e.key === "Enter") $("gateGo").click(); });
   $("keyBtn").addEventListener("click", () => { if (!confirm("저장된 Gemini API 키를 지우고 다시 입력할까요?")) return; BF.ai.setKey(""); $("gateKey").value = ""; renderGate(); });
-  async function runAi() {
-    if (!BF.ai.key()) { toast("실사 보기는 STEP 1의 AI 연결에서 Gemini 키를 넣으면 쓸 수 있어요", 3000); $("keyPanel").scrollIntoView({ behavior: "smooth", block: "center" }); return; }
-    if (!S.garments.length) { toast("먼저 옷을 골라 주세요", 2000); return; }
-    const sig = aiSig();
-    if (aiCache.has(sig)) { S.aiResult = aiCache.get(sig); S.aiSig = sig; $("aiImg").src = S.aiResult; $("viewAiBtn").hidden = false; setView("ai"); return; }
-    if (aiBusy) return;
-    aiBusy = true; $("aiBtn").disabled = true; $("aiState").hidden = false; $("aiStateT").textContent = "실사로 그리는 중… 20~40초"; $("aiErr").hidden = true;
-    try {
-      const key = BF.ai.key();
-      const [personB64, refB64, gs] = await Promise.all([mannB64(), previewB64(), garmentPngs()]);
-      const v = currentValues();
-      const sizesNote = `person shoulder width ${v.shoulder ? v.shoulder.toFixed(0) : "?"} cm, height ${v.height || "?"} cm`;
-      const url = await BF.ai.tryOn({ personB64, refB64, garments: gs, sizesNote, key });
-      aiCache.set(sig, url);
-      if (sig === aiSig()) { S.aiResult = url; S.aiSig = sig; $("aiImg").src = url; $("viewAiBtn").hidden = false; setView("ai"); }
-    } catch (e) { $("aiErr").textContent = "실사 생성 실패: " + (e.message || e); $("aiErr").hidden = false; setTimeout(() => { $("aiErr").hidden = true; }, 6000); }
-    finally { aiBusy = false; $("aiBtn").disabled = false; $("aiState").hidden = true; }
-  }
-  $("aiBtn").addEventListener("click", runAi);
   renderGate();
 
-  /* ---------- 룩 저장·비교 ---------- */
-  const LK = "tv.looks";
-  const loadLooks = () => { try { return JSON.parse(localStorage.getItem(LK) || "[]"); } catch (e) { return []; } };
-  const saveLooks = list => { try { localStorage.setItem(LK, JSON.stringify(list)); } catch (e) { toast("저장 공간이 부족해요 (룩을 지워 주세요)", 2500); } };
-  const pack = g => ({ catId: g.catId, name: g.name, kind: g.kind, size: g.size, sizeCm: g.sizeCm, url: g.url, w: g.w, h: g.h, refFrac: g.refFrac, color: g.color, draw: g.draw, mine: !!g.mine, scale: g.scale, ys: g.ys, dx: g.dx, dy: g.dy, fit: g.fit });
-  const unpack = g => Object.assign({ id: "g" + Date.now() + Math.random().toString(16).slice(2, 5) }, g);
-  $("saveLook").addEventListener("click", async () => {
-    if (!S.garments.length) { toast("먼저 옷을 골라 주세요", 2000); return; }
-    const list = loadLooks(); const c = await svgToPng(fitSvg, 160, 210, "#D7D7D7");
-    list.unshift({ id: "l" + Date.now(), name: `룩 ${list.length + 1}`, t: Date.now(), sex: S.sex, frame: S.lastType?.frame, garments: S.garments.map(pack), thumb: c.toDataURL("image/jpeg", .8) });
-    saveLooks(list.slice(0, 12)); toast("룩을 저장했어요", 1500);
-    S.tab = "looks"; [...$("wtabs").children].forEach(x => x.classList.toggle("on", x.dataset.k === "looks")); renderWardrobe();
-  });
-  function renderLooks(g) {
-    const list = loadLooks();
-    if (!list.length) { g.innerHTML = '<div class="fr-empty" style="flex:1">옷을 입힌 뒤 위의 룩 저장을 누르면 여기에 모여요, 두 룩을 나란히 비교할 수도 있어요</div>'; return; }
-    list.forEach(lk => {
-      const el = document.createElement("div"); el.className = "pcard lk";
-      el.innerHTML = `<button class="lk-x" title="삭제">×</button><div class="pimg"><img src="${lk.thumb}" alt="${lk.name}"></div><div class="pn">${lk.name}</div><div class="pm">${lk.garments.map(x => x.name + (x.size ? " " + x.size : "")).join(", ")}</div><button class="lk-cmp">지금 코디와 비교</button>`;
-      el.querySelector(".pimg").addEventListener("click", () => { S.garments = lk.garments.map(unpack); S.sel = S.garments[0]?.id || null; renderAll(); toast(`${lk.name}을 입혔어요`, 1200); });
-      el.querySelector(".lk-x").addEventListener("click", e => { e.stopPropagation(); saveLooks(loadLooks().filter(x => x.id !== lk.id)); renderWardrobe(); });
-      el.querySelector(".lk-cmp").addEventListener("click", e => { e.stopPropagation(); openCompare({ name: "지금 코디", garments: S.garments }, { name: lk.name, garments: lk.garments.map(unpack) }); });
-      g.appendChild(el);
-    });
-  }
-  function easeLine(garments) {
-    const B = fitB; if (!B) return "";
-    return garments.map(g => {
-      if (g.kind === "shoes" || !g.sizeCm) return `${g.name}${g.size ? " " + g.size : ""}`;
-      if (g.kind === "bottom") { const ts = B.torsoSide(B.waistY + (B.crotchY - B.waistY) * .28); const e = (g.sizeCm * B.kLow - (ts[1] - ts[0]) * 1.3) / B.kLow; return `${g.name} ${g.size} · 허리 여유 ${e >= 0 ? "+" : ""}${e.toFixed(1)}cm`; }
-      const e = g.sizeCm - B.Sv; return `${g.name} ${g.size} · 어깨 여유 ${e >= 0 ? "+" : ""}${e.toFixed(1)}cm`;
-    }).join("<br>");
-  }
-  function openCompare(a, b) {
-    if (!fitB) return;
-    const modal = document.createElement("div"); modal.className = "modal";
-    const fig = x => `<figure><svg viewBox="0 0 320 420">${BF.fitRender(fitB, x.garments, { guides: true })}</svg><figcaption><b>${x.name}</b>${easeLine(x.garments) || "옷 없음"}</figcaption></figure>`;
-    modal.innerHTML = `<div class="box cmp"><h3 style="margin:0 0 10px">나란히 비교</h3><div class="cmp-grid">${fig(a)}${fig(b)}</div><div class="row" style="margin-top:10px;justify-content:flex-end"><button class="btn" id="cmpClose">닫기</button></div></div>`;
-    document.body.appendChild(modal); modal.querySelector("#cmpClose").onclick = () => modal.remove(); modal.addEventListener("click", e => { if (e.target === modal) modal.remove(); });
-  }
-  $("cmpSize").addEventListener("click", () => {
-    const g = S.garments.find(x => x.id === S.sel); if (!g || !g.refFrac) { toast("사이즈가 있는 옷을 골라 주세요", 2000); return; }
-    const keys = BF.sizeKeys(g.kind); const i = keys.indexOf(String(g.size)); const alt = keys[i + 1] ?? keys[i - 1]; if (alt == null) return;
-    const other = S.garments.map(x => x.id === g.id ? Object.assign({}, x, { size: alt, sizeCm: BF.SIZES[g.kind][alt] }) : x);
-    openCompare({ name: `${g.name} ${g.size}`, garments: S.garments }, { name: `${g.name} ${alt}`, garments: other });
-  });
-
-  /* ---------- 룩북 카드 ---------- */
-  const loadImg = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = src; });
-  async function avatarSnapshot() { if (S.view === "ai" && S.aiResult) return await loadImg(S.aiResult); const c = await fitPng(); return await loadImg(c.toDataURL("image/png")); }
-  const rr = (x, X, y, w, h, r) => { x.beginPath(); x.roundRect(X, y, w, h, r); };
-  async function makeLookbook() {
-    if (!S.garments.length) { alert("먼저 옷을 골라 주세요"); return; }
-    const W = 1080, H = 1350; const cv = document.createElement("canvas"); cv.width = W; cv.height = H; const x = cv.getContext("2d");
-    x.fillStyle = "#F4F1EC"; x.fillRect(0, 0, W, H);
-    // 헤더
-    x.fillStyle = "#1B1D22"; x.font = "800 30px Manrope, 'Noto Sans KR', sans-serif"; x.fillText("Team Vibe", 56, 66);
-    x.fillStyle = "#8A8F98"; x.font = "500 16px 'Noto Sans KR', sans-serif"; x.fillText(`${BF.REF[group()].label} · ${S.lastType ? S.lastType.frame : ""} · ${new Date().toLocaleDateString("ko-KR")}`, 56, 92);
-    x.textAlign = "right"; x.fillStyle = "#1B1D22"; x.font = "600 15px 'JetBrains Mono', monospace"; x.fillText("LOOK 01", W - 56, 66); x.textAlign = "left";
-    // 오른쪽: 아바타 착용 컷
-    const av = await avatarSnapshot();
-    const ax = 470, ay = 120, aw = W - ax - 56, ah = H - ay - 120;
-    rr(x, ax, ay, aw, ah, 22); x.fillStyle = "#FFFFFF"; x.fill();
-    const g = x.createRadialGradient(ax + aw / 2, ay + ah * 0.92, 10, ax + aw / 2, ay + ah * 0.92, aw * 0.5); g.addColorStop(0, "rgba(0,0,0,.10)"); g.addColorStop(1, "rgba(0,0,0,0)");
-    x.fillStyle = g; x.fillRect(ax, ay, aw, ah);
-    if (av) { const sc = Math.min((aw - 40) / av.width, (ah - 40) / av.height); const dw = av.width * sc, dh = av.height * sc; x.drawImage(av, ax + (aw - dw) / 2, ay + (ah - dh) / 2 + 10, dw, dh); }
-    // 왼쪽: 상품 컷 + 라벨
-    const items = S.garments.slice().sort((a, b) => BF.KIND_ORDER[b.kind] - BF.KIND_ORDER[a.kind]);
-    const lx = 56, lw = 380, top = 120, bottom = H - 120, gap = 18; const cardH = Math.min(420, (bottom - top - gap * (items.length - 1)) / items.length);
-    for (let i = 0; i < items.length; i++) {
-      const gm = items[i], y = top + i * (cardH + gap);
-      rr(x, lx, y, lw, cardH, 18); x.fillStyle = "#FFFFFF"; x.fill();
-      const im = await loadImg(gm.url);
-      if (im) { const pad = 26, bw = lw - pad * 2, bh = cardH - 74; const sc = Math.min(bw / im.width, bh / im.height); const dw = im.width * sc, dh = im.height * sc; x.drawImage(im, lx + (lw - dw) / 2, y + pad + (bh - dh) / 2, dw, dh); }
-      // 라벨(밑줄 태그 스타일)
-      const label = `${gm.name}${gm.size ? " · " + gm.size : ""}`; x.font = "600 17px 'Noto Sans KR', sans-serif"; const tw = x.measureText(label).width;
-      x.fillStyle = "#1B1D22"; x.fillText(label, lx + 22, y + cardH - 26);
-      x.strokeStyle = "#1B1D22"; x.lineWidth = 2; x.beginPath(); x.moveTo(lx + 22, y + cardH - 18); x.lineTo(lx + 22 + tw, y + cardH - 18); x.stroke();
-      const fb = fitBadge(gm, currentValues()).replace(/<[^>]+>/g, ""); if (fb) { x.fillStyle = "#8A8F98"; x.font = "500 13px 'Noto Sans KR', sans-serif"; x.fillText(fb, lx + 22 + tw + 12, y + cardH - 26); }
-    }
-    // 하단 요약
-    const v = currentValues(); x.fillStyle = "#8A8F98"; x.font = "500 14px 'JetBrains Mono', monospace";
-    x.fillText(`키 ${v.height || "-"} · 어깨 ${v.shoulder ? v.shoulder.toFixed(1) : "-"} · 허리 ${v.waist ? v.waist.toFixed(1) : "-"} · 다리 ${v.leg ? v.leg.toFixed(1) : "-"} cm`, 56, H - 70);
-    x.fillText("teamvibe-yonsei.github.io/bodyfit-lab", 56, H - 46);
-    // 미리보기 모달
-    const modal = document.createElement("div"); modal.className = "modal";
-    modal.innerHTML = `<div class="box look"><img alt="룩북 카드"><div class="row" style="margin-top:10px;justify-content:flex-end"><button class="btn" id="lkClose">닫기</button><button class="btn primary" id="lkSave">PNG 저장</button></div></div>`;
-    modal.querySelector("img").src = cv.toDataURL("image/png"); document.body.appendChild(modal);
-    modal.querySelector("#lkClose").onclick = () => modal.remove(); modal.addEventListener("click", e => { if (e.target === modal) modal.remove(); });
-    modal.querySelector("#lkSave").onclick = () => download(cv, "teamvibe_lookbook.png");
-  }
-  $("lookBtn").addEventListener("click", makeLookbook);
-
-  /* ---------- 요약 ---------- */
-  function renderSummary(spec, c) {
-    const el = $("summary");
-    if (!spec.length) { el.textContent = "아직 결과가 없습니다"; el.dataset.text = ""; return; }
-    const fmt = p => `${p.unit === "" ? p.value.toFixed(2) : p.value.toFixed(1)}${p.unit === "%" ? "%" : p.unit ? p.unit : ""}`;
-    const groups = [];
-    groups.push({ title: `${BF.REF[group()].label} 기준`, lines: spec.map(p => [p.name, `${fmt(p)}  ·  상위 ${p.topPct.toFixed(1)}%`]) });
-    if (c) groups.push({ title: "체형과 추천", lines: [["체형", c.label]].concat(c.recommendations.map(r => [r.part, r.good.slice(0, 2).join(", ")])) });
-    if (S.garments.length) groups.push({ title: "착용", lines: [["착용", S.garments.map(g => g.name + (g.size ? " " + g.size : "")).join(", ")]] });
-    el.innerHTML = groups.map(g => `<div class="sg"><div class="sg-t">${g.title}</div>${g.lines.map(([k, v]) => `<div class="sl"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("")}</div>`).join("");
-    el.dataset.text = groups.map(g => `[Team Vibe] ${g.title}\n` + g.lines.map(([k, v]) => `${k}: ${v.replace(/\s+·\s+/g, " · ")}`).join("\n")).join("\n\n");
-  }
-  $("copyBtn").addEventListener("click", async () => { try { await navigator.clipboard.writeText($("summary").dataset.text || $("summary").textContent); $("copyBtn").textContent = "복사됨"; setTimeout(() => $("copyBtn").textContent = "복사", 1500); } catch (e) { } });
 
   /* ---------- 갱신 ---------- */
   function currentValues() { const v = {}; ["height", "shoulder", "waist", "leg", "weight"].forEach(k => { const u = used(k); if (u) v[k] = u; }); const cc = parseFloat($("chestIn").value), wc = parseFloat($("waistCIn").value); if (cc > 0) v.chestC = cc; if (wc > 0) v.waistC = wc; v.group = group(); return v; }
-  function renderAll() { renderWardrobe(); renderWorn(); syncCtrl(); renderAvatar(currentValues()); renderSummary(BF.spectrum(currentValues(), group()), BF.classify(BF.spectrum(currentValues(), group()), currentValues(), S.sex)); }
   function update(rebuild = true) {
     S.est = stage.measure(parseFloat($("height").value) || 0);
     renderMeasures();
     const values = currentValues(); const spec = BF.spectrum(values, group());
     const r = BF.REF[group()]; $("groupChip").textContent = r.label.replace(" (근사)", "") + " 기준";
-    renderSpec(spec); const c = renderType(spec, values); S.lastType = c; renderWardrobe();
-    // 옷 사이즈 자동 재선택(치수 바뀌면)
-    BF.setSizeSex(S.sex);
-    S.garments.forEach(g => { if (g.refFrac) { if (!g.sizeLocked || BF.SIZES[g.kind][g.size] == null) { g.sizeLocked = false; g.size = defaultSize(g.kind, values); } g.sizeCm = BF.SIZES[g.kind][g.size]; } });
-    renderWorn(); renderAvatar(values); renderSummary(spec, c); save();
+    renderSpec(spec); const c = renderType(spec, values); S.lastType = c; save();
   }
-  $("resetAll").addEventListener("click", () => { if (!confirm("입력값·사진·옷을 모두 지울까요?")) return; try { localStorage.removeItem(LS); } catch (e) { } location.reload(); });
+  $("resetAll").addEventListener("click", () => { if (!confirm("입력값과 사진을 모두 지울까요?")) return; try { localStorage.removeItem(LS); } catch (e) { } location.reload(); });
 
   load();
   [...$("sexSeg").children].forEach(b => b.classList.toggle("on", b.dataset.v === S.sex));
-  $("guideBtn").classList.toggle("on", S.guides); renderRef(); renderWardrobe(); update();
+  renderRef(); update();
   setTimeout(() => BF.pose.load().catch(() => { }), 1500);
 })();

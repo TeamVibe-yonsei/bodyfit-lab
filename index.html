@@ -7,7 +7,7 @@
 <meta name="description" content="사진 한 장으로 내 체형과 옷 핏을 확인하는 웹 서비스">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Noto+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/style.css?v=58">
+<link rel="stylesheet" href="css/style.css?v=59">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236D95F2'/%3E%3Cpath d='M8 10l8 13 8-13M12 6.5c1.3 1 2.7 1 4 0s2.7-1 4 0' fill='none' stroke='%230F1524' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 </head>
 <body>
@@ -23,17 +23,9 @@
 </header>
 
 <section class="guide" id="guide">
-  <div class="pose-ex"><figure><img src="img/pose-basic.jpg" alt="기본 촬영 자세 예시"><figcaption>기본 자세</figcaption></figure><figure><img src="img/pose-card.jpg?v=58" alt="카드 정밀 측정 자세 예시"><figcaption>카드 정밀 측정</figcaption></figure></div>
+  <div class="pose-ex"><figure><img src="img/pose-basic.jpg?v=59" alt="기본 촬영 자세 예시"><figcaption>기본 자세</figcaption></figure><figure><img src="img/pose-card.jpg?v=59" alt="카드 정밀 측정 자세 예시"><figcaption>카드 정밀 측정</figcaption></figure></div>
   <div class="guide-text">
     <h2>타이트한 옷을 입은 사진이 좋아요</h2>
-    <ul class="tips">
-      <li>카메라를 허리 높이에 두고 2~3m 거리에서 정면으로 찍어요</li>
-      <li>발끝까지 프레임에 들어오게, 팔은 몸에서 살짝 떼고 발은 어깨너비로 벌려요</li>
-      <li>몸 윤곽이 보이는 옷, 단색 배경, 균일한 조명이 좋아요</li>
-      <li>카드(신용·체크·교통카드, 신분증)를 허리 옆에 팔을 살짝 뻗어 들고 찍으면 키 입력 없이 더 정확해요</li>
-      <li>정확한 값을 실측하여 직접 입력하면 좋아요</li>
-    </ul>
-    <div class="legend" id="legend2"></div>
   </div>
 </section>
 
@@ -71,7 +63,7 @@
       </div>
       <div class="guide-row">
         <div class="guide-line" id="status">숫자를 몸의 올바른 위치에 놓아 주세요</div>
-        <div class="row" style="gap:8px"><button class="btn" id="aiPlaceBtn" title="Gemini가 어깨 가쪽점·허리 윤곽 등 기준점을 찍어 줍니다 (STEP 4의 키 사용)">AI 정밀 배치</button><button class="btn primary big" id="diagBtn" disabled>진단하기</button></div>
+        <div class="row" style="gap:8px"><button class="btn" id="aiPlaceBtn" title="Gemini가 어깨 가쪽점·허리 윤곽 등 기준점을 찍어 줍니다 (AI 연결의 키 사용)">AI 정밀 배치</button><button class="btn primary big" id="diagBtn" disabled>진단하기</button></div>
       </div>
     </div>
     <div class="panel">
@@ -101,7 +93,7 @@
     <div class="panel">
       <h3>측정 치수</h3>
       <div class="mlist" id="mlist"></div>
-      <div class="ref"><h3 class="mt">기준 통계</h3><div class="ref-head"><div class="seg" id="refSex"><button data-v="M" class="on">남성</button><button data-v="F">여성</button></div><span class="note" style="margin:0">평균값 (cm, kg)</span></div><div class="ref-table" id="refTable"></div></div>
+      <details class="ref more mt"><summary>평균값</summary><div class="ref-head"><div class="seg" id="refSex"><button data-v="M" class="on">남성</button><button data-v="F">여성</button></div><span class="note" style="margin:0">제8차 한국인 인체치수조사 (cm, kg)</span></div><div class="ref-table" id="refTable"></div></details>
     </div>
     <div class="panel spec-panel">
       <h3>또래 분포에서 내 위치</h3>
@@ -120,61 +112,17 @@
   <div class="sizes" id="sizes"></div>
 </section>
 
-<!-- ───────── Step 4 ───────── -->
-<section class="step locked" id="s4">
-  <div class="step-head"><span class="step-num">STEP 4</span><h2>피팅룸</h2></div>
-  <div class="fr" id="fr">
-    <div class="fr-stage">
-      <svg id="fitSvg" viewBox="0 0 320 420" role="img" aria-label="핏 미리보기"></svg>
-      <div class="ai-view" id="aiView" hidden><img id="aiImg" alt="AI 실사 착용 결과"></div>
-      <div class="ai-state" id="aiState" hidden><span class="dot"></span><span id="aiStateT">옷 입히는 중…</span></div>
-      <div class="ai-err" id="aiErr" hidden></div>
-      <div class="fr-top">
-        <div class="seg" id="viewSeg" hidden><button data-v="fit" class="on">미리보기</button><button data-v="ai" id="viewAiBtn" hidden>실사</button></div>
-        <div class="fr-actions">
-          <button class="seg-btn" id="guideBtn">여유 치수</button>
-          <button class="seg-btn primary-outline" id="aiBtn">실사 보기</button>
-          <button class="seg-btn" id="dlBtn">다운로드</button>
-          <button class="seg-btn" id="lookBtn">룩북 카드</button>
-          <button class="seg-btn" id="saveLook">룩 저장</button>
-        </div>
-      </div>
-    </div>
-    <aside class="fr-outfit glass">
-        <div class="wlist" id="wlist"></div>
-        <div class="ctrl" id="gctrl" hidden><div class="row"><button class="gbtn" id="cmpSize">옆 사이즈와 비교</button><button class="gbtn" id="gdel">벗기</button></div></div>
-    </aside>
-    <div class="fr-shelf">
-      <div class="fr-shelf-head">
-        <div class="seg" id="wtabs"><button data-k="reco" class="on">내 체형 추천</button><button data-k="top">상의</button><button data-k="outer">아우터</button><button data-k="bottom">하의</button><button data-k="shoes">신발</button><button data-k="mine">내 옷</button><button data-k="looks">저장한 룩</button></div>
-        <label class="btn file" id="addMine">내 옷 사진 추가<input type="file" id="garment" accept="image/*" multiple></label>
-      </div>
-      <div class="fr-carousel" id="wgrid"></div>
-    </div>
-  </div>
-</section>
-
-<section class="report locked">
-  <div class="panel">
-    <div><h3>결과 요약</h3><div id="summary" class="sum">아직 결과가 없습니다</div></div>
-    <div class="row"><button class="btn" id="copyBtn">복사</button><button class="btn primary" id="shareBtn">결과 카드 저장</button></div>
-  </div>
-</section>
 </main>
 
 <footer><div class="wrap">
-  <p>Team Vibe · 연세대학교 학생자율연구 · 데이터: 국가기술표준원 제8차 한국인 인체치수조사 · 포즈 추정: Google MediaPipe · <span id="ver">v58</span></p>
+  <p>Team Vibe · 연세대학교 학생자율연구 · 데이터: 국가기술표준원 제8차 한국인 인체치수조사 · 포즈 추정: Google MediaPipe · <span id="ver">v59</span></p>
 </div></footer>
 
-<script src="vendor/pose/pose.js?v=58"></script>
-<script src="js/reference.js?v=58"></script>
-<script src="js/classify.js?v=58"></script>
-<script src="js/measure.js?v=58"></script>
-<script src="js/avatar.js?v=58"></script>
-<script src="js/mannequin.js?v=58"></script>
-<script src="js/fit.js?v=58"></script>
-<script src="js/garments.js?v=58"></script>
-<script src="js/ai.js?v=58"></script>
-<script src="js/app.js?v=58"></script>
+<script src="vendor/pose/pose.js?v=59"></script>
+<script src="js/reference.js?v=59"></script>
+<script src="js/classify.js?v=59"></script>
+<script src="js/measure.js?v=59"></script>
+<script src="js/ai.js?v=59"></script>
+<script src="js/app.js?v=59"></script>
 </body>
 </html>
