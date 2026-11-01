@@ -576,7 +576,7 @@ details.more summary { cursor: pointer; color: var(--accent); font-size: 13px; f
 .clegend span { display: inline-flex; align-items: center; gap: 6px; }
 .clegend .sw { width: 18px; height: 0; border-top: 2px solid; display: inline-block; }
 .clegend .sw.pop { border-color: rgba(109,149,242,.95); }
-.clegend .sw.mod { border-color: #FF8A4D; border-top-style: dashed; }
+.clegend .sw.mod { border-color: #FF8A4D; }
 .clegend .sw.me { width: 10px; height: 10px; border: 2px solid #0F1114; background: #fff; border-radius: 50%; }
 .curve .ch .rk em { font-style: normal; font-family: var(--sans); font-size: 12px; font-weight: 600; color: #FF8A4D; margin-left: 10px; }
 .curves .csrc { margin-top: 2px; font-size: 11px; }
@@ -586,3 +586,15 @@ details.more summary { cursor: pointer; color: var(--accent); font-size: 13px; f
 .rec .row { gap: 8px; flex-wrap: wrap; }
 .rec input[type=text] { flex: 1; min-width: 180px; background: var(--panel-2); border: 1px solid var(--line-2); color: var(--text); border-radius: 10px; padding: 9px 12px; font-size: 14px; }
 .rec input[type=text]:focus { outline: none; border-color: var(--accent); }
+
+/* v61: 그래프 옆 수치 목록 */
+.curve .cbody { display: flex; align-items: center; gap: 12px; }
+.curve .cbody svg { flex: 1; min-width: 0; }
+.curve .cvals { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--muted); min-width: 118px; }
+.curve .cvals li { display: flex; align-items: center; gap: 6px; }
+.curve .cvals b { margin-left: auto; color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+.curve .cvals .sw { width: 14px; height: 0; border-top: 2px solid; display: inline-block; flex: none; }
+.curve .cvals .sw.pop { border-color: rgba(109,149,242,.95); }
+.curve .cvals .sw.mod { border-color: #FF8A4D; }
+.curve .cvals .sw.me { width: 9px; height: 9px; border: 2px solid #0F1114; background: #fff; border-radius: 50%; }
+@media (max-width: 560px) { .curve .cbody { flex-direction: column; align-items: stretch; gap: 6px; } .curve .cvals { gap: 4px; min-width: 0; } }
