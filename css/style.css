@@ -626,3 +626,8 @@ details.more summary { cursor: pointer; color: var(--accent); font-size: 13px; f
 .gap .gv { font-size: 15px; font-weight: 700; }
 .gap .gs { font-size: 12px; color: var(--muted); margin-top: 6px; }
 .gap-head .gsub { font-weight: 500; font-size: 12px; margin-left: 8px; }
+
+/* v63 카드 예시 사진 제거 → 기본 자세 1장 */
+.pose-ex { grid-template-columns: 1fr; max-width: 240px; }
+.guide { grid-template-columns: 240px minmax(0, 1fr); align-items: center; }
+@media (max-width: 860px) { .guide { grid-template-columns: 1fr; } .pose-ex { max-width: none; } }
