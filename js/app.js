@@ -8,7 +8,7 @@
   /* ---------- 저장/복원 ---------- */
   const LS = "bodyfit.v4";
   const save = () => { try { localStorage.setItem(LS, JSON.stringify({ sex: S.sex, ageIn: $("ageIn").value, height: $("height").value, weight: $("weight").value, chestIn: $("chestIn").value, waistCIn: $("waistCIn").value, manual: S.manual})); } catch (e) { } };
-  const load = () => { try { const d = JSON.parse(localStorage.getItem(LS) || "null"); if (!d) return; S.sex = d.sex || "M"; S.manual = d.manual || {}; if (d.ageIn) $("ageIn").value = d.ageIn; if (d.height) $("height").value = d.height; if (d.weight) $("weight").value = d.weight; if (d.chestIn) $("chestIn").value = d.chestIn; if (d.waistCIn) $("waistCIn").value = d.waistCIn; if (d.chestIn || d.waistCIn) $("moreIn").open = true; } catch (e) { } };
+  const load = () => { try { localStorage.removeItem(LS); } catch (e) { } }; // v66: 새로 열 때마다 기본 정보·치수를 비운 상태로 시작
 
   /* ---------- 테마 ---------- */
 
