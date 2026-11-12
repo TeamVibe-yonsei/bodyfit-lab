@@ -648,3 +648,9 @@ details.more summary { cursor: pointer; color: var(--accent); font-size: 13px; f
 .guide-tips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .guide-tips li { font-size: 13px; font-weight: 600; color: var(--ink-2); background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 999px; padding: 6px 12px; }
 @media (max-width: 860px) { .guide { grid-template-columns: 72px minmax(0, 1fr) !important; } .guide-img { width: 72px; } }
+@media (min-width: 900px) {
+  #s2 #curvesB1 { grid-template-columns: repeat(3, 1fr); }
+  #s2 #curvesB1 .clegend { grid-column: 1 / -1; }
+  #s2 #curvesB1 .cbody { flex-direction: column; align-items: stretch; }
+  #s2 #curvesB1 .cvals { flex-direction: row; justify-content: space-between; min-width: 0; flex-wrap: wrap; }
+}
