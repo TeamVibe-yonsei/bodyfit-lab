@@ -129,13 +129,42 @@
     const t = pos / 100; const [a, b, u] = t < .5 ? [lo, mid, t / .5] : [mid, hi, (t - .5) / .5];
     return `rgb(${Math.round(lerp(a[0], b[0], u))},${Math.round(lerp(a[1], b[1], u))},${Math.round(lerp(a[2], b[2], u))})`;
   }
-  /* 정규분포 곡선: 또래 평균·표준편차로 종 모양 곡선을 그리고 내 위치를 표시 */
-  const CURVE_KEYS = ["height", "weight", "bmi"];
-  function renderCurves(spec) {
-    const box = $("curves"); if (!box) return; box.innerHTML = "";
-    const items = CURVE_KEYS.map(k => spec.find(p => p.key === k)).filter(Boolean);
-    if (!items.length) { box.innerHTML = '<div class="empty">키와 몸무게를 넣으면 또래 분포와 모델 분포가 표시됩니다</div>'; return; }
-    const MR = BF.MODEL_REF[S.sex];
+  /* 정규분포 곡선: 또래 평균·표준편차로 종 모양 곡선을 그리고 내 위치·모델 분포를 표시 */
+  S.mall = "all";
+  const B2_KEYS = ["shoulder", "waist", "leg"], B1_KEYS = ["height", "weight", "bmi"];
+  const modelB2 = k => { const g = BF.MODEL_B2[S.mall][S.sex]; return g[k] ? g[k] : null; };
+  const modelB1 = k => BF.MODEL_REF[S.sex][k] || null;
+  function renderMallSeg() {
+    const seg = $("mallSeg"); if (!seg || seg.children.length) return;
+    seg.innerHTML = BF.MALLS.map(([v, l]) => `<button data-v="${v}" class="${v === S.mall ? "on" : ""}">${l}</button>`).join("");
+    seg.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; S.mall = b.dataset.v; [...seg.children].forEach(x => x.classList.toggle("on", x === b)); update(false); });
+  }
+  /* 나 vs 쇼핑몰 모델 카드: 연구 결과 문장 + 내 차이 + 사진 핏과의 차이 */
+  const HINT = {
+    shoulder: d => d > 1 ? "사진보다 어깨가 더 끼어요" : d < -1 ? "사진보다 어깨선이 내려와요" : "사진과 비슷한 핏",
+    waist: d => d > 1 ? "사진보다 허리가 더 끼어요" : d < -1 ? "사진보다 허리가 여유로워요" : "사진과 비슷한 핏",
+    leg: d => d < -1 ? "사진보다 바지가 길게 떨어져요" : d > 1 ? "사진보다 바지가 짧게 떨어져요" : "사진과 비슷한 기장"
+  };
+  function renderGaps(spec) {
+    const box = $("gaps"); if (!box) return; renderMallSeg(); box.innerHTML = "";
+    const items = B2_KEYS.map(k => spec.find(p => p.key === k)).filter(Boolean);
+    if (!items.length) { box.innerHTML = '<div class="empty">어깨·허리·다리 치수가 있으면 모델과의 차이가 표시됩니다</div>'; return; }
+    items.forEach(p => {
+      const m = modelB2(p.key); if (!m) return;
+      const share = (1 - BF.normCdf((m[0] - p.mean) / p.sd)) * 100;     // 모델 평균보다 값이 큰 또래 비율
+      const d = p.value - m[0], big = p.key === "leg" ? "길어요" : "넓어요";
+      const el = document.createElement("div"); el.className = "gap";
+      el.innerHTML = `<div class="gk">${p.name}</div>
+        <div class="gd ${d > 0.5 ? "up" : d < -0.5 ? "down" : ""}">${d >= 0 ? "+" : "−"}${Math.abs(d).toFixed(1)}<small>cm</small></div>
+        <div class="gv">${HINT[p.key](d)}</div>
+        <div class="gs">또래 <b>${share.toFixed(0)}%</b>가 모델보다 ${big}</div>`;
+      box.appendChild(el);
+    });
+  }
+  function renderCurveSet(boxId, keys, modelFn, emptyMsg) {
+    const box = $(boxId); if (!box) return; box.innerHTML = "";
+    const items = keys.map(k => spec_.find(p => p.key === k)).filter(Boolean);
+    if (!items.length) { box.innerHTML = `<div class="empty">${emptyMsg}</div>`; return; }
     const lg = document.createElement("div"); lg.className = "clegend";
     lg.innerHTML = `<span><i class="sw pop"></i>또래 (사이즈코리아)</span><span><i class="sw mod"></i>쇼핑몰 모델</span><span><i class="sw me"></i>나</span>`;
     box.appendChild(lg);
@@ -147,20 +176,20 @@
       const bell = (mu, sg) => { let d = `M ${X(zmin).toFixed(1)} ${base}`; for (let z = zmin; z <= zmax + 1e-9; z += 0.08) { const y = base - pdf((z - mu) / sg) * (base - top); d += ` L ${X(z).toFixed(1)} ${y.toFixed(1)}`; } return d + ` L ${X(zmax).toFixed(1)} ${base} Z`; };
       const lo = p.invert ? zc : zmin, hi = p.invert ? zmax : zc;
       let f = `M ${X(lo).toFixed(1)} ${base}`; for (let z = lo; z <= hi + 1e-9; z += 0.08) f += ` L ${X(z).toFixed(1)} ${Y(z).toFixed(1)}`; f += ` L ${X(hi).toFixed(1)} ${base} Z`;
-      const m = MR[p.key]; let modelPath = "", modelLine = "", modelNote = "";
+      const m = modelFn(p.key); let modelPath = "", modelLine = "", modelNote = "";
       if (m) {
         const mu = (m[0] - p.mean) / p.sd, sg = m[1] / p.sd;
         modelPath = `<path d="${bell(mu, sg)}" fill="rgba(255,138,77,.14)" stroke="#FF8A4D" stroke-width="2"/>`;
-        modelLine = `<line x1="${X(mu).toFixed(1)}" x2="${X(mu).toFixed(1)}" y1="${(base - (base - top)).toFixed(1)}" y2="${base}" stroke="#FF8A4D" stroke-dasharray="2 3" opacity=".7"/>`;
+        modelLine = `<line x1="${X(mu).toFixed(1)}" x2="${X(mu).toFixed(1)}" y1="${top}" y2="${base}" stroke="#FF8A4D" stroke-dasharray="2 3" opacity=".7"/>`;
         const zm = (p.value - m[0]) / m[1]; const cdfm = BF.normCdf(zm); const topM = (p.invert ? cdfm : 1 - cdfm) * 100;
         modelNote = `모델 기준 ${topM <= 50 ? "상위 " + Math.max(0.1, topM).toFixed(0) : "하위 " + Math.max(0.1, 100 - topM).toFixed(0)}%`;
       }
       const ticks = [-3, -2, -1, 0, 1, 2, 3].map(z => `<line x1="${X(z).toFixed(1)}" x2="${X(z).toFixed(1)}" y1="${base}" y2="${base + 4}" stroke="var(--line)"/>`).join("");
       const unit = p.unit === "%" ? "%" : p.unit ? " " + p.unit : "";
-      const fmt = v => p.unit === "" ? v.toFixed(1) : v.toFixed(1);
+      const fmt = v => v.toFixed(1);
       const rank = p.topPct <= 50 ? `<small>또래 상위</small>${p.topPct.toFixed(0)}%` : `<small>또래 하위</small>${p.pct.toFixed(0)}%`;
       const el = document.createElement("div"); el.className = "curve";
-      el.innerHTML = `<div class="ch"><b>${p.name}</b><span class="rk">${rank}${modelNote ? `<em>${modelNote}</em>` : ""}</span></div>
+      el.innerHTML = `<div class="ch"><b>${p.name}</b><span class="rk">${rank}</span></div>
         <div class="cbody"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${p.name} 분포에서 내 위치">
           <path d="${bell(0, 1)}" fill="rgba(109,149,242,.10)" stroke="rgba(109,149,242,.9)" stroke-width="1.5"/>
           <path d="${f}" fill="rgba(109,149,242,.28)"/>
@@ -175,7 +204,13 @@
       box.appendChild(el);
     });
   }
-
+  let spec_ = [];
+  function renderCurves(spec) {
+    spec_ = spec;
+    renderGaps(spec);
+    renderCurveSet("curves", B2_KEYS, modelB2, "어깨·허리·다리 치수가 있으면 또래 분포와 모델 분포가 표시됩니다");
+    renderCurveSet("curvesB1", B1_KEYS, modelB1, "키와 몸무게를 넣으면 또래 분포와 모델 분포가 표시됩니다");
+  }
 
   function renderSpec(spec) {
     renderCurves(spec);

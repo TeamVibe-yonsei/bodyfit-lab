@@ -598,3 +598,31 @@ details.more summary { cursor: pointer; color: var(--accent); font-size: 13px; f
 .curve .cvals .sw.mod { border-color: #FF8A4D; }
 .curve .cvals .sw.me { width: 9px; height: 9px; border: 2px solid #0F1114; background: #fff; border-radius: 50%; }
 @media (max-width: 560px) { .curve .cbody { flex-direction: column; align-items: stretch; gap: 6px; } .curve .cvals { gap: 4px; min-width: 0; } }
+
+/* v62 나 vs 쇼핑몰 모델 */
+.gap-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.gap-head h3 { margin: 0; }
+.gap-head .seg button { padding: 6px 10px; font-size: 12px; }
+.gaps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.gap { background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 12px; padding: 14px 14px 12px; display: flex; flex-direction: column; gap: 6px; }
+.gap .gk { font-size: 13px; font-weight: 700; color: var(--ink-2); }
+.gap .gs { font-size: 12px; color: var(--muted); line-height: 1.45; min-height: 34px; }
+.gap .gs b { color: #FF8A4D; font-size: 14px; }
+.gap .gd { font-family: var(--display); font-weight: 800; font-size: 34px; letter-spacing: -.03em; line-height: 1.1; color: var(--ink); }
+.gap .gd small { font-size: 14px; font-weight: 600; margin-left: 2px; color: var(--muted); }
+.gap .gd.up { color: #FF8A4D; } .gap .gd.down { color: #6D95F2; }
+.gap .gv { font-size: 13px; font-weight: 600; color: var(--ink); }
+.gap .gh { font-size: 12px; color: var(--ink-2); background: var(--panel); border-radius: 8px; padding: 7px 9px; line-height: 1.45; }
+.gap .gm { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+.gaps .gsrc { grid-column: 1 / -1; margin: 0; font-size: 11px; }
+@media (max-width: 760px) { .gaps { grid-template-columns: 1fr; } .gap .gs { min-height: 0; } }
+
+.gap-panel { margin-bottom: 16px; }
+.gap .gs { min-height: 0; font-size: 13px; }
+
+.gap { align-items: flex-start; gap: 4px; padding: 16px; }
+.gap .gk { font-size: 14px; }
+.gap .gd { font-size: 44px; margin: 2px 0; }
+.gap .gv { font-size: 15px; font-weight: 700; }
+.gap .gs { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.gap-head .gsub { font-weight: 500; font-size: 12px; margin-left: 8px; }
