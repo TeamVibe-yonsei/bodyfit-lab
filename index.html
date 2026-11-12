@@ -74,7 +74,7 @@
         <label class="field">키 (cm) <input type="number" id="height" min="120" max="220" step="0.1"></label>
         <label class="field">몸무게 (kg) <input type="number" id="weight" min="30" max="200" step="0.1"></label>
       </div>
-      <details class="more" id="moreIn">
+      <details class="more" id="moreIn" hidden>
         <summary>정확도를 높이고 싶어요</summary>
         <p class="note" style="margin:6px 0 8px">줄자로 잰 둘레를 넣으면 사이즈 가이드에 그 값을 사용합니다</p>
         <div class="row">
@@ -89,38 +89,25 @@
 <!-- ───────── Step 2 ───────── -->
 <section class="step locked" id="s2">
   <div class="step-head"><span class="step-num">STEP 2</span><h2>나는 상위 몇 퍼일까</h2><span id="groupChip" hidden></span></div>
+  <div class="panel">
+    <h3>측정 치수</h3>
+    <div class="mlist" id="mlist"></div>
+    <div hidden><div class="seg" id="refSex"><button data-v="M" class="on">남성</button><button data-v="F">여성</button></div><div id="refTable"></div></div>
+  </div>
   <div class="panel gap-panel">
-    <div class="gap-head"><h3>나 vs 쇼핑몰 모델 <span class="note gsub">모델 평균과 내 치수의 차이</span></h3><div class="seg" id="mallSeg"></div></div>
+    <h3>나 vs 쇼핑몰 모델</h3>
     <div class="gaps" id="gaps"></div>
   </div>
-  <div class="grid-2">
-    <div class="panel">
-      <h3>측정 치수</h3>
-      <div class="mlist" id="mlist"></div>
-      <details class="ref more mt"><summary>평균값</summary><div class="ref-head"><div class="seg" id="refSex"><button data-v="M" class="on">남성</button><button data-v="F">여성</button></div><span class="note" style="margin:0">제8차 한국인 인체치수조사 (cm, kg)</span></div><div class="ref-table" id="refTable"></div></details>
-    </div>
-    <div class="panel spec-panel">
-      <h3>또래 분포에서 내 위치</h3>
-      <div class="curves" id="curves"></div>
-      <details class="more mt" id="b1More"><summary>키 · 몸무게 · BMI도 보기</summary><div class="curves mt" id="curvesB1"></div></details>
-      <details class="more mt"><summary>스펙트럼 자세히 보기</summary><div class="spec mt" id="spec"></div></details>
-    </div>
+  <div class="panel spec-panel">
+    <h3>또래 분포에서 내 위치</h3>
+    <div class="curves" id="curves"></div>
+    <details class="more mt" id="b1More"><summary>키 · 몸무게 · BMI도 보기</summary><div class="curves mt" id="curvesB1"></div></details>
+    <details class="more mt"><summary>스펙트럼 자세히 보기</summary><div class="spec mt" id="spec"></div></details>
   </div>
-</section>
-
-<!-- ───────── Step 3 ───────── -->
-<section class="step locked" id="s3">
-  <div class="step-head"><span class="step-num">STEP 3</span><h2>체형과 어울리는 옷</h2></div>
-  <div id="typeCard" class="empty">치수가 모두 있으면 체형과 추천이 표시됩니다</div>
-  <div class="reco" id="reco"></div>
-  <div class="sizes" id="sizes"></div>
 </section>
 
 </main>
 
-<footer><div class="wrap">
-  <p>Team Vibe · 연세대학교 학생자율연구 · 데이터: 국가기술표준원 제8차 한국인 인체치수조사 · 포즈 추정: Google MediaPipe · <span id="ver">v63</span></p>
-</div></footer>
 
 <script src="vendor/pose/pose.js?v=61"></script>
 <script src="js/reference.js?v=61"></script>

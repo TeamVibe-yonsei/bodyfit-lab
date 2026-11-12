@@ -631,3 +631,12 @@ details.more summary { cursor: pointer; color: var(--accent); font-size: 13px; f
 .pose-ex { grid-template-columns: 1fr; max-width: 240px; }
 .guide { grid-template-columns: 240px minmax(0, 1fr); align-items: center; }
 @media (max-width: 860px) { .guide { grid-template-columns: 1fr; } .pose-ex { max-width: none; } }
+
+/* v64 STEP 2 세로 배치 */
+#s2 > .panel { margin-bottom: 16px; }
+@media (min-width: 900px) {
+  #s2 #curves { grid-template-columns: repeat(3, 1fr); }
+  #s2 #curves .clegend { grid-column: 1 / -1; }
+  #s2 #curves .cbody { flex-direction: column; align-items: stretch; }
+  #s2 #curves .cvals { flex-direction: row; justify-content: space-between; min-width: 0; flex-wrap: wrap; }
+}

@@ -77,7 +77,7 @@
   function diagnose() {
     if (!(parseFloat($("height").value) > 0) && !(S.est.scaleSource === "card" && S.est.height)) { setStatus("키를 입력하거나 카드 정밀 측정을 켜 주세요", "err"); $("height").focus(); return; }
     S.diagnosed = true;
-    ["s2", "s3"].forEach((id, i) => { const el = $(id); el.classList.remove("locked"); el.classList.add("reveal"); el.style.animationDelay = (i * 0.12) + "s"; });
+    ["s2"].forEach((id, i) => { const el = $(id); el.classList.remove("locked"); el.classList.add("reveal"); el.style.animationDelay = (i * 0.12) + "s"; });
     update();
     $("s2").scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -146,7 +146,7 @@
     leg: d => d < -1 ? "사진보다 바지가 길게 떨어져요" : d > 1 ? "사진보다 바지가 짧게 떨어져요" : "사진과 비슷한 기장"
   };
   function renderGaps(spec) {
-    const box = $("gaps"); if (!box) return; renderMallSeg(); box.innerHTML = "";
+    const box = $("gaps"); if (!box) return; box.innerHTML = "";
     const items = B2_KEYS.map(k => spec.find(p => p.key === k)).filter(Boolean);
     if (!items.length) { box.innerHTML = '<div class="empty">어깨·허리·다리 치수가 있으면 모델과의 차이가 표시됩니다</div>'; return; }
     items.forEach(p => {
@@ -166,7 +166,7 @@
     const items = keys.map(k => spec_.find(p => p.key === k)).filter(Boolean);
     if (!items.length) { box.innerHTML = `<div class="empty">${emptyMsg}</div>`; return; }
     const lg = document.createElement("div"); lg.className = "clegend";
-    lg.innerHTML = `<span><i class="sw pop"></i>또래 (사이즈코리아)</span><span><i class="sw mod"></i>쇼핑몰 모델</span><span><i class="sw me"></i>나</span>`;
+    lg.innerHTML = `<span><i class="sw pop"></i>또래</span><span><i class="sw mod"></i>쇼핑몰 모델</span><span><i class="sw me"></i>나</span>`;
     box.appendChild(lg);
     items.forEach(p => {
       const W = 520, H = 140, padL = 10, padR = 10, base = H - 24, top = 14;
@@ -244,6 +244,7 @@
   /* ---------- 체형·추천 ---------- */
   const ICON = { top: "T", bottom: "B", outer: "O" };
   function renderType(spec, values) {
+    if (!$("typeCard")) return null;
     const c = BF.classify(spec, values, S.sex); const T = $("typeCard"), R = $("reco");
     if (!c) { T.className = "empty"; T.textContent = "치수가 모두 있으면 체형과 추천이 표시됩니다"; R.innerHTML = ""; $("sizes").innerHTML = ""; return null; }
     T.className = "type-card";
