@@ -7,7 +7,7 @@
 <meta name="description" content="사진 한 장으로 내 체형과 옷 핏을 확인하는 웹 서비스">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Noto+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/style.css?v=66">
+<link rel="stylesheet" href="css/style.css?v=67">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236D95F2'/%3E%3Cpath d='M8 10l8 13 8-13M12 6.5c1.3 1 2.7 1 4 0s2.7-1 4 0' fill='none' stroke='%230F1524' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 </head>
 <body>
@@ -23,7 +23,7 @@
 </header>
 
 <section class="guide" id="guide">
-  <img class="guide-img" src="img/pose-basic.jpg?v=66" alt="기본 촬영 자세 예시">
+  <img class="guide-img" src="img/pose-basic.jpg?v=67" alt="기본 촬영 자세 예시">
   <div class="guide-text">
     <h2>이런 사진이 좋아요</h2>
     <ul class="guide-tips"><li>몸에 붙는 옷</li><li>정면 · 전신</li><li>팔은 몸에서 살짝 떼고</li></ul>
@@ -71,7 +71,7 @@
       <h3>기본 정보</h3>
       <div class="row">
         <div class="field">성별<div class="seg" id="sexSeg"><button data-v="M" class="on">남성</button><button data-v="F">여성</button></div></div>
-        <label class="field">나이 <input type="number" id="ageIn" autocomplete="off" min="10" max="90" step="1"></label>
+        <label class="field" hidden>나이 <input type="number" id="ageIn" autocomplete="off" min="10" max="90" step="1"></label>
         <label class="field">키 (cm) <input type="number" id="height" autocomplete="off" min="120" max="220" step="0.1"></label>
         <label class="field">몸무게 (kg) <input type="number" id="weight" autocomplete="off" min="30" max="200" step="0.1"></label>
       </div>
@@ -100,7 +100,7 @@
     <div class="gaps" id="gaps"></div>
   </div>
   <div class="panel spec-panel">
-    <h3>또래 분포에서 내 위치</h3>
+    <h3>20대 분포에서 내 위치</h3>
     <div class="curves" id="curves"></div>
     <details class="more mt" id="b1More"><summary>키 · 몸무게 · BMI도 보기</summary><div class="curves mt" id="curvesB1"></div></details>
     <details class="more mt"><summary>스펙트럼 자세히 보기</summary><div class="spec mt" id="spec"></div></details>
@@ -110,11 +110,11 @@
 </main>
 
 
-<script src="vendor/pose/pose.js?v=66"></script>
-<script src="js/reference.js?v=66"></script>
-<script src="js/classify.js?v=66"></script>
-<script src="js/measure.js?v=66"></script>
-<script src="js/ai.js?v=66"></script>
-<script src="js/app.js?v=66"></script>
+<script src="vendor/pose/pose.js?v=67"></script>
+<script src="js/reference.js?v=67"></script>
+<script src="js/classify.js?v=67"></script>
+<script src="js/measure.js?v=67"></script>
+<script src="js/ai.js?v=67"></script>
+<script src="js/app.js?v=67"></script>
 </body>
 </html>

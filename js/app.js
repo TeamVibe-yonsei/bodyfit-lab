@@ -157,7 +157,7 @@
       el.innerHTML = `<div class="gk">${p.name}</div>
         <div class="gd ${d > 0.5 ? "up" : d < -0.5 ? "down" : ""}">${d >= 0 ? "+" : "−"}${Math.abs(d).toFixed(1)}<small>cm</small></div>
         <div class="gv">${HINT[p.key](d)}</div>
-        <div class="gs">또래 <b>${share.toFixed(0)}%</b>가 모델보다 ${big}</div>`;
+        <div class="gs">20대 <b>${share.toFixed(0)}%</b>가 모델보다 ${big}</div>`;
       box.appendChild(el);
     });
   }
@@ -166,7 +166,7 @@
     const items = keys.map(k => spec_.find(p => p.key === k)).filter(Boolean);
     if (!items.length) { box.innerHTML = `<div class="empty">${emptyMsg}</div>`; return; }
     const lg = document.createElement("div"); lg.className = "clegend";
-    lg.innerHTML = `<span><i class="sw pop"></i>또래</span><span><i class="sw mod"></i>쇼핑몰 모델</span><span><i class="sw me"></i>나</span>`;
+    lg.innerHTML = `<span><i class="sw pop"></i>20대 평균</span><span><i class="sw mod"></i>쇼핑몰 모델</span><span><i class="sw me"></i>나</span>`;
     box.appendChild(lg);
     items.forEach(p => {
       const W = 520, H = 140, padL = 10, padR = 10, base = H - 24, top = 14;
@@ -187,7 +187,7 @@
       const ticks = [-3, -2, -1, 0, 1, 2, 3].map(z => `<line x1="${X(z).toFixed(1)}" x2="${X(z).toFixed(1)}" y1="${base}" y2="${base + 4}" stroke="var(--line)"/>`).join("");
       const unit = p.unit === "%" ? "%" : p.unit ? " " + p.unit : "";
       const fmt = v => v.toFixed(1);
-      const rank = p.topPct <= 50 ? `<small>또래 상위</small>${p.topPct.toFixed(0)}%` : `<small>또래 하위</small>${p.pct.toFixed(0)}%`;
+      const rank = p.topPct <= 50 ? `<small>20대 상위</small>${p.topPct.toFixed(0)}%` : `<small>20대 하위</small>${p.pct.toFixed(0)}%`;
       const el = document.createElement("div"); el.className = "curve";
       el.innerHTML = `<div class="ch"><b>${p.name}</b><span class="rk">${rank}</span></div>
         <div class="cbody"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${p.name} 분포에서 내 위치">
@@ -199,7 +199,7 @@
           <line x1="${X(zc).toFixed(1)}" x2="${X(zc).toFixed(1)}" y1="${Y(zc).toFixed(1)}" y2="${base}" stroke="#fff" stroke-width="2"/>
           <circle cx="${X(zc).toFixed(1)}" cy="${Y(zc).toFixed(1)}" r="5.5" fill="#fff" stroke="#0F1114" stroke-width="2"/>
         </svg>
-        <ul class="cvals"><li><i class="sw pop"></i>또래 평균<b>${fmt(p.mean)}${unit}</b></li>${m ? `<li><i class="sw mod"></i>모델 평균<b>${fmt(m[0])}${unit}</b></li>` : ""}<li><i class="sw me"></i>나<b>${fmt(p.value)}${unit}</b></li></ul></div>
+        <ul class="cvals"><li><i class="sw pop"></i>20대 평균<b>${fmt(p.mean)}${unit}</b></li>${m ? `<li><i class="sw mod"></i>모델 평균<b>${fmt(m[0])}${unit}</b></li>` : ""}<li><i class="sw me"></i>나<b>${fmt(p.value)}${unit}</b></li></ul></div>
         <div class="cf"><span>${p.invert ? p.hiLabel : p.loLabel}</span><span>${p.invert ? p.loLabel : p.hiLabel}</span></div>`;
       box.appendChild(el);
     });
@@ -208,8 +208,8 @@
   function renderCurves(spec) {
     spec_ = spec;
     renderGaps(spec);
-    renderCurveSet("curves", B2_KEYS, modelB2, "어깨·허리·다리 치수가 있으면 또래 분포와 모델 분포가 표시됩니다");
-    renderCurveSet("curvesB1", B1_KEYS, modelB1, "키와 몸무게를 넣으면 또래 분포와 모델 분포가 표시됩니다");
+    renderCurveSet("curves", B2_KEYS, modelB2, "어깨·허리·다리 치수가 있으면 20대 분포와 모델 분포가 표시됩니다");
+    renderCurveSet("curvesB1", B1_KEYS, modelB1, "키와 몸무게를 넣으면 20대 분포와 모델 분포가 표시됩니다");
   }
 
   function renderSpec(spec) {
@@ -233,7 +233,7 @@
         <div class="ends"><span>${loL}</span><span>평균</span><span>${hiL}</span></div>`;
       const pin = it.querySelector(".pin");
       const show = () => { hide(); tip = document.createElement("div"); tip.className = "tooltip";
-        tip.innerHTML = `<b>${p.name}</b> ${vtxt}<br>또래 평균 ${p.mean.toFixed(1)}<br>상위 ${p.topPct.toFixed(1)}% / 하위 ${p.pct.toFixed(1)}%`;
+        tip.innerHTML = `<b>${p.name}</b> ${vtxt}<br>20대 평균 ${p.mean.toFixed(1)}<br>상위 ${p.topPct.toFixed(1)}% / 하위 ${p.pct.toFixed(1)}%`;
         it.appendChild(tip); tip.style.left = pos + "%"; tip.style.top = (pin.offsetTop - 4) + "px"; };
       const hide = () => { if (tip) { tip.remove(); tip = null; } };
       pin.addEventListener("mouseenter", show); pin.addEventListener("mouseleave", hide); pin.addEventListener("focus", show); pin.addEventListener("blur", hide);
