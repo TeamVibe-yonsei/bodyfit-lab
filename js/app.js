@@ -125,7 +125,7 @@
   const lerp = (a, b, t) => a + (b - a) * t;
   const hex2 = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
   function posColor(pos) {
-    const lo = hex2("#4D8DFF"), mid = hex2("#B8BEC8"), hi = hex2("#FF8A4D");
+    const lo = hex2("#0071E3"), mid = hex2("#D2D2D7"), hi = hex2("#6E6E73");
     const t = pos / 100; const [a, b, u] = t < .5 ? [lo, mid, t / .5] : [mid, hi, (t - .5) / .5];
     return `rgb(${Math.round(lerp(a[0], b[0], u))},${Math.round(lerp(a[1], b[1], u))},${Math.round(lerp(a[2], b[2], u))})`;
   }
@@ -175,8 +175,8 @@
       const m = modelFn(p.key); let modelPath = "", modelLine = "", modelNote = "";
       if (m) {
         const mu = (m[0] - p.mean) / p.sd, sg = m[1] / p.sd;
-        modelPath = `<path d="${bell(mu, sg)}" fill="rgba(255,138,77,.14)" stroke="#FF8A4D" stroke-width="2"/>`;
-        modelLine = `<line x1="${X(mu).toFixed(1)}" x2="${X(mu).toFixed(1)}" y1="${top}" y2="${base}" stroke="#FF8A4D" stroke-dasharray="2 3" opacity=".7"/>`;
+        modelPath = `<path d="${bell(mu, sg)}" fill="rgba(0,113,227,.12)" stroke="#0071e3" stroke-width="2"/>`;
+        modelLine = `<line x1="${X(mu).toFixed(1)}" x2="${X(mu).toFixed(1)}" y1="${top}" y2="${base}" stroke="#0071e3" stroke-dasharray="2 3" opacity=".7"/>`;
         const zm = (p.value - m[0]) / m[1]; const cdfm = BF.normCdf(zm); const topM = (p.invert ? cdfm : 1 - cdfm) * 100;
         modelNote = `모델 기준 ${topM <= 50 ? "상위 " + Math.max(0.1, topM).toFixed(0) : "하위 " + Math.max(0.1, 100 - topM).toFixed(0)}%`;
       }
@@ -187,13 +187,13 @@
       const el = document.createElement("div"); el.className = "curve";
       el.innerHTML = `<div class="ch"><b>${p.name}</b><span class="rk">${rank}</span></div>
         <div class="cbody"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${p.name} 분포에서 내 위치">
-          <path d="${bell(0, 1)}" fill="rgba(109,149,242,.10)" stroke="rgba(109,149,242,.9)" stroke-width="1.5"/>
-          <path d="${f}" fill="rgba(109,149,242,.28)"/>
+          <path d="${bell(0, 1)}" fill="rgba(29,29,31,.06)" stroke="#86868b" stroke-width="1.5"/>
+          <path d="${f}" fill="rgba(29,29,31,.16)"/>
           ${modelPath}${modelLine}
           <line x1="${X(0).toFixed(1)}" x2="${X(0).toFixed(1)}" y1="${top}" y2="${base}" stroke="var(--muted)" stroke-dasharray="3 3"/>
           <line x1="${padL}" x2="${W - padR}" y1="${base}" y2="${base}" stroke="var(--line)"/>${ticks}
           <line x1="${X(zc).toFixed(1)}" x2="${X(zc).toFixed(1)}" y1="${Y(zc).toFixed(1)}" y2="${base}" stroke="#fff" stroke-width="2"/>
-          <circle cx="${X(zc).toFixed(1)}" cy="${Y(zc).toFixed(1)}" r="5.5" fill="#fff" stroke="#0F1114" stroke-width="2"/>
+          <circle cx="${X(zc).toFixed(1)}" cy="${Y(zc).toFixed(1)}" r="5.5" fill="#fff" stroke="#1d1d1f" stroke-width="2"/>
         </svg>
         <ul class="cvals"><li><i class="sw pop"></i>한국인 평균<b>${fmt(p.mean)}${unit}</b></li>${m ? `<li><i class="sw mod"></i>모델 평균<b>${fmt(m[0])}${unit}</b></li>` : ""}<li><i class="sw me"></i>나<b>${fmt(p.value)}${unit}</b></li></ul></div>
         <div class="cf"><span>${p.invert ? p.hiLabel : p.loLabel}</span><span>${p.invert ? p.loLabel : p.hiLabel}</span></div>`;
